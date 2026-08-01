@@ -67,54 +67,48 @@ Run `crontab -e` and add entries like these. Adjust the binary path to wherever 
 Times are in your system timezone. On macOS this matches your local time automatically. On Linux servers that run in UTC, add `TZ=America/Los_Angeles` (or your timezone) as the first line of your crontab.
 
 ```cron
+TZ=America/Los_Angeles
+
 # ── Morning routine ──────────────────────────────────────────────
-# Moon phase at 8am — changes slowly, once a day is plenty
 0 8 * * * cd ~/repos/vestaboard-note && ./note moon
-
-# On this day at 8:05am — a fun read with your coffee
 5 8 * * * cd ~/repos/vestaboard-note && ./note onthisday
-
-# Rain check at 8:10am — is it worth grabbing an umbrella?
 10 8 * * * cd ~/repos/vestaboard-note && ./note rain
-
-# Countdown at 8:15am — good for trips, deadlines, anything you're anticipating
 15 8 * * * cd ~/repos/vestaboard-note && ./note countdown
 
 # ── Throughout the day ───────────────────────────────────────────
 # Weather every 30 minutes
 */30 * * * * cd ~/repos/vestaboard-note && ./note weather
 
-# Calendar at the top of every hour — what's coming up next
+# Calendar at the top of every hour
 0 * * * * cd ~/repos/vestaboard-note && ./note calendar
 
-# Clock at :15 and :45 — fills the gap between weather and calendar
-15,45 * * * * cd ~/repos/vestaboard-note && ./note clock
+# Sunrise/sunset during waking hours (offset to avoid :00 collision)
+2 8-22 * * * cd ~/repos/vestaboard-note && ./note sunrise
 
-# Sunrise/sunset during waking hours — shows whichever is coming up next
-0 8-22 * * * cd ~/repos/vestaboard-note && ./note sunrise
-
-# UV index during peak hours — only meaningful when the sun is up
-0 10-15 * * * cd ~/repos/vestaboard-note && ./note uv
+# UV index during peak hours (offset to avoid collision)
+4 10-15 * * * cd ~/repos/vestaboard-note && ./note uv
 
 # ── Seasonal ─────────────────────────────────────────────────────
 # Air quality every hour during fire season (June–October)
-0 * * 6-10 * cd ~/repos/vestaboard-note && ./note air
+6 * * 6-10 * cd ~/repos/vestaboard-note && ./note air
 
 # Pollen levels every morning during spring (March–June)
-0 8 * 3-6 * cd ~/repos/vestaboard-note && ./note pollen
+20 8 * 3-6 * cd ~/repos/vestaboard-note && ./note pollen
 
 # ── Screensaver ──────────────────────────────────────────────────
-# Random pattern at midnight — something pretty while you sleep
 0 0 * * * cd ~/repos/vestaboard-note && ./note pattern
 ```
 
-A minimal "set and forget" setup if you just want the basics:
+If you want the clock cycling constantly (good for a display you glance at all day), use a high-frequency setup instead:
 
 ```cron
+TZ=America/Los_Angeles
+* * * * * cd ~/repos/vestaboard-note && ./note clock
 */30 * * * * cd ~/repos/vestaboard-note && ./note weather
 0 * * * * cd ~/repos/vestaboard-note && ./note calendar
-15,45 * * * * cd ~/repos/vestaboard-note && ./note clock
 ```
+
+The Vestaboard rate limit is 1 message per 15 seconds, so `clock` every minute is the fastest practical cadence.
 
 Rate limit: 1 message per 15 seconds (enforced client-side).
 
