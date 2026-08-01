@@ -29,6 +29,31 @@ var weatherDescriptions = map[int]string{
 	95: "TSTORM", 96: "TSTORM+HAIL", 99: "TSTORM+HAIL",
 }
 
+func colorForCode(wmoCode int) int {
+	switch {
+	case wmoCode == 0 || wmoCode == 1:
+		return 65
+	case wmoCode == 2 || wmoCode == 3:
+		return 69
+	case wmoCode == 45 || wmoCode == 48:
+		return 69
+	case wmoCode >= 51 && wmoCode <= 55:
+		return 67
+	case wmoCode >= 61 && wmoCode <= 65:
+		return 67
+	case wmoCode >= 71 && wmoCode <= 77:
+		return 69
+	case wmoCode >= 80 && wmoCode <= 82:
+		return 67
+	case wmoCode >= 85 && wmoCode <= 86:
+		return 69
+	case wmoCode >= 95:
+		return 68
+	default:
+		return 64
+	}
+}
+
 func Fetch(lat, lon float64) ([3]string, error) {
 	url := fmt.Sprintf("%s?latitude=%f&longitude=%f&current=temperature_2m,weathercode&temperature_unit=fahrenheit",
 		apiURL, lat, lon)
@@ -51,9 +76,11 @@ func Fetch(lat, lon float64) ([3]string, error) {
 	}
 
 	now := time.Now()
-	line1 := layout.Center(now.Format("Mon Jan 2"), layout.Cols)
-	line2 := layout.Center(fmt.Sprintf("%.0fF", data.Current.Temperature), layout.Cols)
-	line3 := layout.Center(desc, layout.Cols)
+	color := colorForCode(data.Current.WeatherCode)
 
-	return [3]string{line1, line2, line3}, nil
+	return [3]string{
+		layout.ColorRow(color),
+		layout.Center(fmt.Sprintf("%.0fF  %s", data.Current.Temperature, now.Format("Mon Jan 2")), layout.Cols),
+		layout.Center(desc, layout.Cols),
+	}, nil
 }

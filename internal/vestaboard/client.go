@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -89,10 +90,15 @@ func encodeLines(lines [rows]string) [rows][cols]int {
 		var codes []int
 		s := strings.ToUpper(line)
 		for len(s) > 0 {
-			if strings.HasPrefix(s, "{62}") {
-				codes = append(codes, 62)
-				s = s[4:]
-				continue
+			if s[0] == '{' {
+				end := strings.IndexByte(s, '}')
+				if end > 1 {
+					if n, err := strconv.Atoi(s[1:end]); err == nil {
+						codes = append(codes, n)
+						s = s[end+1:]
+						continue
+					}
+				}
 			}
 			ru := []rune(s)[0]
 			codes = append(codes, charCode(ru))

@@ -1,6 +1,7 @@
 package layout
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 	"unicode"
@@ -145,4 +146,9 @@ func StripEmoji(s string) string {
 		b.WriteRune(r)
 	}
 	return strings.TrimSpace(b.String())
+}
+
+func ColorRow(code int) string {
+	tile := fmt.Sprintf("{%d}", code)
+	return strings.Repeat(tile, Cols)
 }
