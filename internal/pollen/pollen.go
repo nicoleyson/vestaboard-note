@@ -19,18 +19,18 @@ type apiResponse struct {
 	} `json:"current"`
 }
 
-func Fetch(lat, lon float64) ([3]string, error) {
+func Fetch(lat, lon float64) ([3]string, bool, error) {
 	url := fmt.Sprintf("%s?latitude=%f&longitude=%f&current=grass_pollen,tree_pollen,weed_pollen", apiURL, lat, lon)
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Get(url)
 	if err != nil {
-		return [3]string{}, err
+		return [3]string{}, false, err
 	}
 	defer resp.Body.Close()
 
 	var data apiResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return [3]string{}, err
+		return [3]string{}, false, err
 	}
 
 	grass := data.Current.GrassPollen
@@ -40,11 +40,12 @@ func Fetch(lat, lon float64) ([3]string, error) {
 	dominant, dominantVal := dominantType(grass, tree, weed)
 	label, color := classify(dominantVal)
 
+	trivial := label == "LOW"
 	return [3]string{
 		layout.ColorRow(color),
 		layout.Center(fmt.Sprintf("POLLEN  %s", label), layout.Cols),
 		layout.Center(dominant, layout.Cols),
-	}, nil
+	}, trivial, nil
 }
 
 func dominantType(grass, tree, weed float64) (name string, val float64) {

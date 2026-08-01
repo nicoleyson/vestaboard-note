@@ -48,3 +48,20 @@ func TestDominantType(t *testing.T) {
 		}
 	}
 }
+
+func TestClassifyTrivial(t *testing.T) {
+	trivialCases := []float64{0, 5, 9.9}
+	for _, v := range trivialCases {
+		label, _ := classify(v)
+		if label != "LOW" {
+			t.Errorf("classify(%.1f) = %q, expected LOW (trivial)", v, label)
+		}
+	}
+	nonTrivialCases := []float64{10, 50, 200}
+	for _, v := range nonTrivialCases {
+		label, _ := classify(v)
+		if label == "LOW" {
+			t.Errorf("classify(%.1f) = LOW, expected non-trivial", v)
+		}
+	}
+}
