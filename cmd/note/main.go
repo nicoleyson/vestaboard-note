@@ -89,7 +89,7 @@ func runStatus(cfg config) {
 	printLines("moon", moon.Format(now), nil)
 
 	if cfg.Lat != 0 || cfg.Lon != 0 {
-		lines, err = air.Fetch(cfg.Lat, cfg.Lon)
+		lines, _, err = air.Fetch(cfg.Lat, cfg.Lon)
 		printLines("air", lines, err)
 
 		lines, err = flights.Fetch(cfg.Lat, cfg.Lon)
@@ -98,13 +98,13 @@ func runStatus(cfg config) {
 		lines, err = sunrise.Fetch(cfg.Lat, cfg.Lon)
 		printLines("sunrise", lines, err)
 
-		lines, err = pollen.Fetch(cfg.Lat, cfg.Lon)
+		lines, _, err = pollen.Fetch(cfg.Lat, cfg.Lon)
 		printLines("pollen", lines, err)
 
 		lines, err = uv.Fetch(cfg.Lat, cfg.Lon)
 		printLines("uv", lines, err)
 
-		lines, err = rain.Fetch(cfg.Lat, cfg.Lon)
+		lines, _, err = rain.Fetch(cfg.Lat, cfg.Lon)
 		printLines("rain", lines, err)
 	} else {
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "air")
@@ -253,6 +253,7 @@ func main() {
 	}
 
 	var lines [3]string
+	var trivial bool
 
 	switch cmd {
 	case "weather":
@@ -276,7 +277,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error: lat and lon required for air\n")
 			os.Exit(1)
 		}
-		lines, err = air.Fetch(cfg.Lat, cfg.Lon)
+		lines, trivial, err = air.Fetch(cfg.Lat, cfg.Lon)
 	case "flights":
 		if cfg.Lat == 0 || cfg.Lon == 0 {
 			fmt.Fprintf(os.Stderr, "error: lat and lon required for flights\n")
@@ -318,7 +319,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error: lat and lon required for pollen\n")
 			os.Exit(1)
 		}
-		lines, err = pollen.Fetch(cfg.Lat, cfg.Lon)
+		lines, trivial, err = pollen.Fetch(cfg.Lat, cfg.Lon)
 	case "uv":
 		if cfg.Lat == 0 || cfg.Lon == 0 {
 			fmt.Fprintf(os.Stderr, "error: lat and lon required for uv\n")
@@ -330,7 +331,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error: lat and lon required for rain\n")
 			os.Exit(1)
 		}
-		lines, err = rain.Fetch(cfg.Lat, cfg.Lon)
+		lines, trivial, err = rain.Fetch(cfg.Lat, cfg.Lon)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmd)
 		os.Exit(1)
@@ -339,6 +340,10 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
+	}
+
+	if trivial {
+		return
 	}
 
 	client := vestaboard.New(cfg.Token)
