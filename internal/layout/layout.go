@@ -2,6 +2,7 @@ package layout
 
 import (
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
@@ -122,4 +123,21 @@ func Truncate(s string, n int) string {
 		return string(runes[:n])
 	}
 	return string(runes[:n-1]) + "~"
+}
+
+func StripEmoji(s string) string {
+	s = strings.ReplaceAll(s, "❤️", "{62}")
+	s = strings.ReplaceAll(s, "❤", "{62}")
+
+	var b strings.Builder
+	for _, r := range s {
+		if unicode.Is(unicode.So, r) || unicode.Is(unicode.Sm, r) ||
+			(r > 0x1F000 && r <= 0x1FFFF) ||
+			(r >= 0x1F300 && r <= 0x1FAFF) ||
+			(r >= 0x2600 && r <= 0x27BF) {
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return strings.TrimSpace(b.String())
 }

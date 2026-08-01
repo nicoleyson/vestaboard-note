@@ -84,9 +84,10 @@ func Fetch(urls []string) ([3]string, error) {
 
 	next := upcoming[0]
 	localStart := next.start.Local()
+	title := layout.Truncate(layout.StripEmoji(next.summary), layout.Cols)
 	return [3]string{
 		layout.Center(localStart.Format("Mon 1/2"), layout.Cols),
 		layout.Center(localStart.Format("3:04 PM"), layout.Cols),
-		layout.Center(layout.Truncate(next.summary, layout.Cols), layout.Cols),
+		layout.Center(title, layout.Cols),
 	}, nil
 }
