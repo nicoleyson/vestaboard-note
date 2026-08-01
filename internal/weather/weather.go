@@ -19,14 +19,14 @@ type response struct {
 }
 
 var weatherDescriptions = map[int]string{
-	0: "CLEAR", 1: "MOSTLY CLR", 2: "PARTLY CLDY", 3: "OVERCAST",
-	45: "FOG", 48: "ICING FOG",
-	51: "LT DRIZZLE", 53: "DRIZZLE", 55: "HVY DRIZZLE",
-	61: "LT RAIN", 63: "RAIN", 65: "HVY RAIN",
-	71: "LT SNOW", 73: "SNOW", 75: "HVY SNOW", 77: "SNOW GRAINS",
-	80: "SHOWERS", 81: "SHOWERS", 82: "HVY SHOWERS",
-	85: "SNOW SHWRS", 86: "HVY SNOW SHWRS",
-	95: "TSTORM", 96: "TSTORM+HAIL", 99: "TSTORM+HAIL",
+	0: "CLEAR", 1: "CLEAR", 2: "CLOUDY", 3: "OVERCAST",
+	45: "FOG", 48: "FOG",
+	51: "DRIZZLE", 53: "DRIZZLE", 55: "DRIZZLE",
+	61: "RAIN", 63: "RAIN", 65: "RAIN",
+	71: "SNOW", 73: "SNOW", 75: "SNOW", 77: "SNOW",
+	80: "SHOWERS", 81: "SHOWERS", 82: "SHOWERS",
+	85: "SNOW SHOWERS", 86: "SNOW SHOWERS",
+	95: "THUNDERSTORM", 96: "THUNDERSTORM", 99: "THUNDERSTORM",
 }
 
 func colorForCode(wmoCode int) int {
