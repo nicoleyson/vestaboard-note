@@ -1,6 +1,7 @@
 package onthisday
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -22,11 +23,24 @@ type apiResponse struct {
 func Fetch(t time.Time) ([3]string, error) {
 	url := fmt.Sprintf(apiURL, t.Month(), t.Day())
 	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(url)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return [3]string{}, err
+	}
+	req.Header.Set("User-Agent", "vestaboard-note/1.0 (https://github.com/nicoleyson/vestaboard-note)")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return [3]string{}, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		var buf bytes.Buffer
+		buf.ReadFrom(resp.Body)
+		return [3]string{}, fmt.Errorf("wikipedia api %d: %s", resp.StatusCode, buf.String()[:min(len(buf.String()), 80)])
+	}
 
 	var data apiResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
