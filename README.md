@@ -66,17 +66,17 @@ Run `crontab -e` and add entries like these. Adjust the binary path to wherever 
 
 ```cron
 # ── Morning routine ──────────────────────────────────────────────
-# Moon phase at 7am — changes slowly, once a day is plenty
-0 7 * * * cd ~/repos/vestaboard-note && ./note moon
+# Moon phase at 8am — changes slowly, once a day is plenty
+0 8 * * * cd ~/repos/vestaboard-note && ./note moon
 
-# On this day at 7:05am — a fun read with your coffee
-5 7 * * * cd ~/repos/vestaboard-note && ./note onthisday
+# On this day at 8:05am — a fun read with your coffee
+5 8 * * * cd ~/repos/vestaboard-note && ./note onthisday
 
-# Rain check at 7:10am — is it worth grabbing an umbrella?
-10 7 * * * cd ~/repos/vestaboard-note && ./note rain
+# Rain check at 8:10am — is it worth grabbing an umbrella?
+10 8 * * * cd ~/repos/vestaboard-note && ./note rain
 
-# Countdown at 7:15am — good for trips, deadlines, anything you're anticipating
-15 7 * * * cd ~/repos/vestaboard-note && ./note countdown
+# Countdown at 8:15am — good for trips, deadlines, anything you're anticipating
+15 8 * * * cd ~/repos/vestaboard-note && ./note countdown
 
 # ── Throughout the day ───────────────────────────────────────────
 # Weather every 30 minutes
@@ -89,13 +89,13 @@ Run `crontab -e` and add entries like these. Adjust the binary path to wherever 
 15,45 * * * * cd ~/repos/vestaboard-note && ./note clock
 
 # Sunrise/sunset during waking hours — shows whichever is coming up next
-0 6-22 * * * cd ~/repos/vestaboard-note && ./note sunrise
+0 8-22 * * * cd ~/repos/vestaboard-note && ./note sunrise
 
 # UV index during peak hours — only meaningful when the sun is up
 0 10-15 * * * cd ~/repos/vestaboard-note && ./note uv
 
 # Discogs vibe check at each time-of-day transition
-0 6,9,12,17,20,23 * * * cd ~/repos/vestaboard-note && ./note discogs
+0 9,12,17,20,23 * * * cd ~/repos/vestaboard-note && ./note discogs
 
 # ── Seasonal ─────────────────────────────────────────────────────
 # Air quality every hour during fire season (June–October)
