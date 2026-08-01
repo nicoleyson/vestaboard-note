@@ -31,3 +31,20 @@ func TestClassify(t *testing.T) {
 		}
 	}
 }
+
+func TestClassifyTrivial(t *testing.T) {
+	trivialCases := []int{0, 25, 50}
+	for _, v := range trivialCases {
+		label, _ := classify(v)
+		if label != "GOOD" {
+			t.Errorf("classify(%d) = %q, expected GOOD (trivial)", v, label)
+		}
+	}
+	nonTrivialCases := []int{51, 100, 200}
+	for _, v := range nonTrivialCases {
+		label, _ := classify(v)
+		if label == "GOOD" {
+			t.Errorf("classify(%d) = GOOD, expected non-trivial", v)
+		}
+	}
+}
