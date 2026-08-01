@@ -9,6 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/nicoleyson/vestaboard-note/internal/air"
+	"github.com/nicoleyson/vestaboard-note/internal/pattern"
 	"github.com/nicoleyson/vestaboard-note/internal/calendar"
 	"github.com/nicoleyson/vestaboard-note/internal/clock"
 	"github.com/nicoleyson/vestaboard-note/internal/countdown"
@@ -22,7 +23,7 @@ import (
 
 var subcommands = []string{
 	"weather", "clock", "calendar", "moon", "air",
-	"flights", "onthisday", "countdown", "discogs",
+	"flights", "onthisday", "countdown", "discogs", "pattern",
 	"status", "completion",
 }
 
@@ -104,18 +105,28 @@ func runStatus(cfg config) {
 	} else {
 		fmt.Printf("  %-12s skipped (no discogs_token/discogs_username)\n", "discogs")
 	}
+
+	printLines("pattern", pattern.Random(), nil)
 }
 
 const bashCompletion = `_note_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
-    local cmds="weather clock calendar moon air flights onthisday countdown discogs status completion"
-    COMPREPLY=($(compgen -W "${cmds}" -- "${cur}"))
+    local prev="${COMP_WORDS[COMP_CWORD-1]}"
+    local cmds="weather clock calendar moon air flights onthisday countdown discogs pattern status completion"
+    local patterns="random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow"
+    if [[ "${prev}" == "pattern" ]]; then
+        COMPREPLY=($(compgen -W "${patterns}" -- "${cur}"))
+    elif [[ "${prev}" == "completion" ]]; then
+        COMPREPLY=($(compgen -W "bash zsh fish" -- "${cur}"))
+    else
+        COMPREPLY=($(compgen -W "${cmds}" -- "${cur}"))
+    fi
 }
 complete -F _note_completions note`
 
 const zshCompletion = `#compdef note
 _note() {
-    local -a cmds
+    local -a cmds patterns
     cmds=(
         'weather:current conditions'
         'clock:date and time'
@@ -126,10 +137,30 @@ _note() {
         'onthisday:historical event'
         'countdown:days until configured event'
         'discogs:record matched to weather and time'
+        'pattern:random art and color patterns'
         'status:preview all subcommands without sending'
         'completion:print shell completion script'
     )
-    _describe 'command' cmds
+    patterns=(
+        'random:pick a random pattern'
+        'stripes:vertical color bands'
+        'checker:checkerboard of two colors'
+        'bars:three horizontal color bars'
+        'fade:left-to-right color gradient'
+        'diagonal:diagonal color bands'
+        'hearts:color background with hearts'
+        'confetti:random colors and letters'
+        'sparkle:dark background with bright spots'
+        'pulse:concentric color rings from center'
+        'rainbow:spectrum stripes'
+    )
+    if (( CURRENT == 2 )); then
+        _describe 'command' cmds
+    elif [[ ${words[2]} == pattern ]]; then
+        _describe 'pattern' patterns
+    elif [[ ${words[2]} == completion ]]; then
+        _values 'shell' bash zsh fish
+    fi
 }
 _note`
 
@@ -143,8 +174,11 @@ complete -c note -n __fish_use_subcommand -a flights    -d 'Aircraft overhead'
 complete -c note -n __fish_use_subcommand -a onthisday  -d 'Historical event'
 complete -c note -n __fish_use_subcommand -a countdown  -d 'Days until configured event'
 complete -c note -n __fish_use_subcommand -a discogs    -d 'Record matched to weather and time'
+complete -c note -n __fish_use_subcommand -a pattern    -d 'Random art and color patterns'
 complete -c note -n __fish_use_subcommand -a status     -d 'Preview all subcommands without sending'
-complete -c note -n __fish_use_subcommand -a completion -d 'Print shell completion script'`
+complete -c note -n __fish_use_subcommand -a completion -d 'Print shell completion script'
+complete -c note -n '__fish_seen_subcommand_from pattern' -a 'random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow'
+complete -c note -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish'`
 
 func main() {
 	if len(os.Args) < 2 {
@@ -234,6 +268,16 @@ func main() {
 			os.Exit(1)
 		}
 		lines, err = discogs.Fetch(cfg.DiscogsUsername, cfg.DiscogsToken, cfg.Lat, cfg.Lon)
+	case "pattern":
+		name := "random"
+		if len(os.Args) >= 3 {
+			name = os.Args[2]
+		}
+		if name == "random" {
+			lines = pattern.Random()
+		} else {
+			lines, err = pattern.Generate(name)
+		}
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmd)
 		os.Exit(1)
