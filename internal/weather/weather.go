@@ -51,7 +51,7 @@ func Fetch(lat, lon float64) ([3]string, error) {
 	}
 
 	now := time.Now()
-	line1 := layout.Center(now.Format("MON JAN 2"), layout.Cols)
+	line1 := layout.Center(now.Format("Mon Jan 2"), layout.Cols)
 	line2 := layout.Center(fmt.Sprintf("%.0fF", data.Current.Temperature), layout.Cols)
 	line3 := layout.Center(desc, layout.Cols)
 

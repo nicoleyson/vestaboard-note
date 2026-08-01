@@ -71,7 +71,7 @@ func Fetch(urls []string) ([3]string, error) {
 
 	next := upcoming[0]
 	return [3]string{
-		layout.Center(next.start.Format("MON 1/2"), layout.Cols),
+		layout.Center(next.start.Format("Mon 1/2"), layout.Cols),
 		layout.Center(next.start.Format("3:04 PM"), layout.Cols),
 		layout.Center(layout.Truncate(next.summary, layout.Cols), layout.Cols),
 	}, nil
