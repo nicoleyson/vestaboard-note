@@ -1,6 +1,9 @@
 package discogs
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 type season int
 
@@ -24,24 +27,97 @@ func seasonFor(t time.Time) season {
 	}
 }
 
-func vibeLabel(wmoCode int, s season) string {
+type timeSlot int
+
+const (
+	earlyMorning timeSlot = iota
+	morning
+	afternoon
+	evening
+	night
+	lateNight
+)
+
+func timeSlotFor(t time.Time) timeSlot {
+	h := t.Hour()
+	switch {
+	case h >= 5 && h < 9:
+		return earlyMorning
+	case h >= 9 && h < 12:
+		return morning
+	case h >= 12 && h < 17:
+		return afternoon
+	case h >= 17 && h < 20:
+		return evening
+	case h >= 20:
+		return night
+	default:
+		return lateNight
+	}
+}
+
+var timeSlotStyles = map[timeSlot][]string{
+	earlyMorning: {"Ambient", "Acoustic", "Folk", "Lo-Fi", "Contemporary Jazz", "Piano", "Bossa Nova", "New Age"},
+	morning:      {"Pop", "Soul", "Indie Pop", "Funk", "R&B", "Folk", "Soft Rock"},
+	afternoon:    {"Rock", "Funk", "Soul", "Latin", "Indie Rock", "Alternative Rock", "Pop"},
+	evening:      {"Singer/Songwriter", "Jazz", "R&B", "Soul", "Indie Folk", "Bossa Nova", "Contemporary Jazz"},
+	night:        {"Electronic", "Post Bop", "Slowcore", "Dream Pop", "Ambient", "Neo-Soul", "Dark Jazz"},
+	lateNight:    {"Ambient", "Drone", "Post Bop", "Electronic", "Dark Jazz", "Contemporary Jazz", "Lo-Fi"},
+}
+
+var timeSlotKeywords = map[timeSlot][]string{
+	earlyMorning: {"5AM", "6AM", "7AM", "8AM", "MORNING", "DAWN", "SUNRISE", "EARLY", "RISE"},
+	morning:      {"MORNING", "COFFEE", "BREAKFAST", "AM", "WAKE"},
+	afternoon:    {"AFTERNOON", "MIDDAY", "LUNCH", "SUNDAY", "LAZY"},
+	evening:      {"EVENING", "SUNSET", "DUSK", "GOLDEN HOUR", "TWILIGHT"},
+	night:        {"NIGHT", "MIDNIGHT", "AFTER DARK", "LATE NIGHT", "LIGHTS OUT"},
+	lateNight:    {"MIDNIGHT", "4AM", "3AM", "2AM", "1AM", "LATE NIGHT", "INSOMNIA", "SLEEPLESS", "INSOMNIAC", "AFTER HOURS"},
+}
+
+var timeSlotNames = map[timeSlot]string{
+	earlyMorning: "EARLY MORNING",
+	morning:      "MORNING",
+	afternoon:    "AFTERNOON",
+	evening:      "EVENING",
+	night:        "NIGHT",
+	lateNight:    "LATE NIGHT",
+}
+
+func titleMatchesSlot(title string, slot timeSlot) bool {
+	upper := strings.ToUpper(title)
+	for _, kw := range timeSlotKeywords[slot] {
+		if strings.Contains(upper, kw) {
+			return true
+		}
+	}
+	return false
+}
+
+func vibeLabel(wmoCode int, s season, slot timeSlot) string {
 	cond := conditionBucket(wmoCode)
-	seasonName := [4]string{"SPRING", "SUMMER", "FALL", "WINTER"}[s]
+	slotName := timeSlotNames[slot]
 	switch cond {
 	case "clear":
-		return seasonName + " SPIN"
-	case "cloudy":
-		return "CLOUDY " + seasonName
+		seasonName := [4]string{"SPRING", "SUMMER", "FALL", "WINTER"}[s]
+		if slot == lateNight || slot == night {
+			return slotName + " SPIN"
+		}
+		return seasonName + " " + slotName
 	case "rain":
-		return "RAINY DAY PICK"
+		return "RAINY " + slotName
 	case "snow":
-		return "SNOW DAY PICK"
+		return "SNOWY " + slotName
 	case "fog":
-		return "FOGGY PICK"
+		return "FOGGY " + slotName
 	case "storm":
 		return "STORM PICK"
+	case "cloudy":
+		if slot == lateNight || slot == night {
+			return slotName + " SPIN"
+		}
+		return "CLOUDY " + slotName
 	default:
-		return seasonName + " SPIN"
+		return slotName + " SPIN"
 	}
 }
 

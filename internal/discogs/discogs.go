@@ -92,24 +92,45 @@ func cleanArtistName(name string) string {
 	return name
 }
 
-func matchByStyles(records []record, preferred []string) []record {
-	var matched []record
-	for _, r := range records {
-		for _, want := range preferred {
-			for _, have := range r.styles {
-				if strings.EqualFold(want, have) {
-					matched = append(matched, r)
-					goto next
-				}
+func scoreRecord(r record, weatherStyles, timeStyles []string, slot timeSlot) int {
+	score := 1
+	for _, want := range weatherStyles {
+		for _, have := range r.styles {
+			if strings.EqualFold(want, have) {
+				score += 2
+				goto doneWeather
 			}
 		}
-	next:
 	}
-	return matched
+doneWeather:
+	for _, want := range timeStyles {
+		for _, have := range r.styles {
+			if strings.EqualFold(want, have) {
+				score++
+				goto doneTime
+			}
+		}
+	}
+doneTime:
+	if titleMatchesSlot(r.title, slot) {
+		score += 3
+	}
+	return score
 }
 
-func pick(records []record) record {
-	return records[rand.Intn(len(records))]
+func weightedPick(records []record, scores []int) record {
+	total := 0
+	for _, s := range scores {
+		total += s
+	}
+	n := rand.Intn(total)
+	for i, s := range scores {
+		n -= s
+		if n < 0 {
+			return records[i]
+		}
+	}
+	return records[len(records)-1]
 }
 
 func Fetch(username, token string, lat, lon float64) ([3]string, error) {
@@ -120,8 +141,11 @@ func Fetch(username, token string, lat, lon float64) ([3]string, error) {
 
 	now := time.Now()
 	s := seasonFor(now)
-	preferred := stylesFor(wmoCode, s)
-	label := vibeLabel(wmoCode, s)
+	slot := timeSlotFor(now)
+
+	weatherStyles := stylesFor(wmoCode, s)
+	timeStyles := timeSlotStyles[slot]
+	label := vibeLabel(wmoCode, s, slot)
 
 	records, err := fetchCollection(username, token)
 	if err != nil {
@@ -131,15 +155,12 @@ func Fetch(username, token string, lat, lon float64) ([3]string, error) {
 		return [3]string{}, fmt.Errorf("discogs collection is empty")
 	}
 
-	matched := matchByStyles(records, preferred)
-	if len(matched) == 0 {
-		matched = matchByStyles(records, stylesForConditionAny(wmoCode))
-	}
-	if len(matched) == 0 {
-		matched = records
+	scores := make([]int, len(records))
+	for i, r := range records {
+		scores[i] = scoreRecord(r, weatherStyles, timeStyles, slot)
 	}
 
-	chosen := pick(matched)
+	chosen := weightedPick(records, scores)
 
 	return [3]string{
 		layout.Center(label, layout.Cols),
