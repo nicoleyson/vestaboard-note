@@ -1,0 +1,169 @@
+package discogs
+
+import (
+	"encoding/json"
+	"fmt"
+	"math/rand"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/nicoleyson/vestaboard-note/internal/layout"
+)
+
+const apiBase = "https://api.discogs.com"
+
+type collectionPage struct {
+	Pagination struct {
+		Pages int `json:"pages"`
+	} `json:"pagination"`
+	Releases []struct {
+		BasicInformation struct {
+			Title   string `json:"title"`
+			Artists []struct {
+				Name string `json:"name"`
+			} `json:"artists"`
+			Styles []string `json:"styles"`
+			Genres []string `json:"genres"`
+		} `json:"basic_information"`
+	} `json:"releases"`
+}
+
+type record struct {
+	artist string
+	title  string
+	styles []string
+}
+
+func fetchCollection(username, token string) ([]record, error) {
+	client := &http.Client{Timeout: 15 * time.Second}
+	var records []record
+	page := 1
+	for {
+		url := fmt.Sprintf("%s/users/%s/collection/folders/0/releases?per_page=100&page=%d", apiBase, username, page)
+		req, err := http.NewRequest("GET", url, nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Set("Authorization", "Discogs token="+token)
+		req.Header.Set("User-Agent", "vestaboard-note/1.0 +https://github.com/nicoleyson/vestaboard-note")
+
+		resp, err := client.Do(req)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("discogs API returned %d", resp.StatusCode)
+		}
+
+		var pg collectionPage
+		if err := json.NewDecoder(resp.Body).Decode(&pg); err != nil {
+			return nil, err
+		}
+
+		for _, rel := range pg.Releases {
+			info := rel.BasicInformation
+			artist := ""
+			if len(info.Artists) > 0 {
+				artist = cleanArtistName(info.Artists[0].Name)
+			}
+			tags := append(info.Styles, info.Genres...)
+			records = append(records, record{
+				artist: artist,
+				title:  info.Title,
+				styles: tags,
+			})
+		}
+
+		if page >= pg.Pagination.Pages {
+			break
+		}
+		page++
+	}
+	return records, nil
+}
+
+func cleanArtistName(name string) string {
+	if idx := strings.LastIndex(name, " ("); idx != -1 {
+		return name[:idx]
+	}
+	return name
+}
+
+func matchByStyles(records []record, preferred []string) []record {
+	var matched []record
+	for _, r := range records {
+		for _, want := range preferred {
+			for _, have := range r.styles {
+				if strings.EqualFold(want, have) {
+					matched = append(matched, r)
+					goto next
+				}
+			}
+		}
+	next:
+	}
+	return matched
+}
+
+func pick(records []record) record {
+	return records[rand.Intn(len(records))]
+}
+
+func Fetch(username, token string, lat, lon float64) ([3]string, error) {
+	wmoCode, err := fetchWMO(lat, lon)
+	if err != nil {
+		wmoCode = 0
+	}
+
+	now := time.Now()
+	s := seasonFor(now)
+	preferred := stylesFor(wmoCode, s)
+	label := vibeLabel(wmoCode, s)
+
+	records, err := fetchCollection(username, token)
+	if err != nil {
+		return [3]string{}, err
+	}
+	if len(records) == 0 {
+		return [3]string{}, fmt.Errorf("discogs collection is empty")
+	}
+
+	matched := matchByStyles(records, preferred)
+	if len(matched) == 0 {
+		matched = matchByStyles(records, stylesForConditionAny(wmoCode))
+	}
+	if len(matched) == 0 {
+		matched = records
+	}
+
+	chosen := pick(matched)
+
+	return [3]string{
+		layout.Center(label, layout.Cols),
+		layout.PadRight(layout.Truncate(layout.StripEmoji(chosen.artist), layout.Cols), layout.Cols),
+		layout.PadRight(layout.Truncate(layout.StripEmoji(chosen.title), layout.Cols), layout.Cols),
+	}, nil
+}
+
+func fetchWMO(lat, lon float64) (int, error) {
+	url := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=weathercode", lat, lon)
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(url)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	var data struct {
+		Current struct {
+			WeatherCode int `json:"weathercode"`
+		} `json:"current"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return 0, err
+	}
+	return data.Current.WeatherCode, nil
+}
