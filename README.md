@@ -105,8 +105,8 @@ Run `crontab -e` and add entries like these. Adjust the binary path to wherever 
 0 8 * 3-6 * cd ~/repos/vestaboard-note && ./note pollen
 
 # ── Screensaver ──────────────────────────────────────────────────
-# Random pattern at 2am — something pretty while you sleep
-0 2 * * * cd ~/repos/vestaboard-note && ./note pattern
+# Random pattern at midnight — something pretty while you sleep
+0 0 * * * cd ~/repos/vestaboard-note && ./note pattern
 ```
 
 A minimal "set and forget" setup if you just want the basics:
