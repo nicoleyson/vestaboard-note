@@ -19,6 +19,7 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/onthisday"
 	"github.com/nicoleyson/vestaboard-note/internal/pollen"
 	"github.com/nicoleyson/vestaboard-note/internal/rain"
+	"github.com/nicoleyson/vestaboard-note/internal/season"
 	"github.com/nicoleyson/vestaboard-note/internal/sunrise"
 	"github.com/nicoleyson/vestaboard-note/internal/uv"
 	"github.com/nicoleyson/vestaboard-note/internal/vestaboard"
@@ -28,7 +29,7 @@ import (
 var subcommands = []string{
 	"weather", "clock", "calendar", "moon", "air",
 	"flights", "onthisday", "countdown", "discogs", "pattern",
-	"sunrise", "pollen", "uv", "rain",
+	"sunrise", "pollen", "uv", "rain", "season",
 	"status", "completion",
 }
 
@@ -87,6 +88,7 @@ func runStatus(cfg config) {
 	}
 
 	printLines("moon", moon.Format(now), nil)
+	printLines("season", season.Format(now), nil)
 
 	if cfg.Lat != 0 || cfg.Lon != 0 {
 		lines, _, err = air.Fetch(cfg.Lat, cfg.Lon)
@@ -133,7 +135,7 @@ func runStatus(cfg config) {
 const bashCompletion = `_note_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local cmds="weather clock calendar moon air flights onthisday countdown discogs pattern sunrise pollen uv rain status completion"
+    local cmds="weather clock calendar moon air flights onthisday countdown discogs pattern sunrise pollen uv rain season status completion"
     local patterns="random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow"
     if [[ "${prev}" == "pattern" ]]; then
         COMPREPLY=($(compgen -W "${patterns}" -- "${cur}"))
@@ -163,6 +165,7 @@ _note() {
         'pollen:pollen levels by type'
         'uv:uv index with color scale'
         'rain:precipitation probability and intensity'
+        'season:current astronomical season with color'
         'status:preview all subcommands without sending'
         'completion:print shell completion script'
     )
@@ -204,6 +207,7 @@ complete -c note -n __fish_use_subcommand -a sunrise    -d 'Next sunrise or suns
 complete -c note -n __fish_use_subcommand -a pollen     -d 'Pollen levels by type'
 complete -c note -n __fish_use_subcommand -a uv         -d 'UV index with color scale'
 complete -c note -n __fish_use_subcommand -a rain       -d 'Precipitation probability and intensity'
+complete -c note -n __fish_use_subcommand -a season     -d 'Current astronomical season with color'
 complete -c note -n __fish_use_subcommand -a status     -d 'Preview all subcommands without sending'
 complete -c note -n __fish_use_subcommand -a completion -d 'Print shell completion script'
 complete -c note -n '__fish_seen_subcommand_from pattern' -a 'random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow'
@@ -332,6 +336,8 @@ func main() {
 			os.Exit(1)
 		}
 		lines, trivial, err = rain.Fetch(cfg.Lat, cfg.Lon)
+	case "season":
+		lines = season.Format(time.Now())
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmd)
 		os.Exit(1)
