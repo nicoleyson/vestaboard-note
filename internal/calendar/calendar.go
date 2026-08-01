@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/bounoable/ical"
+	ics "github.com/arran4/golang-ical"
 	"github.com/nicoleyson/vestaboard-note/internal/layout"
 )
 
@@ -22,14 +22,27 @@ func fetchURL(url string, client *http.Client) ([]event, error) {
 	}
 	defer resp.Body.Close()
 
-	cal, err := ical.Parse(resp.Body)
+	cal, err := ics.ParseCalendar(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	var events []event
-	for _, e := range cal.Events {
-		events = append(events, event{uid: e.UID, start: e.Start, summary: e.Summary})
+	for _, e := range cal.Events() {
+		start, err := e.GetStartAt()
+		if err != nil {
+			continue
+		}
+		summaryProp := e.GetProperty(ics.ComponentPropertySummary)
+		uidProp := e.GetProperty(ics.ComponentPropertyUniqueId)
+		if summaryProp == nil || uidProp == nil {
+			continue
+		}
+		events = append(events, event{
+			uid:     uidProp.Value,
+			start:   start,
+			summary: summaryProp.Value,
+		})
 	}
 	return events, nil
 }
