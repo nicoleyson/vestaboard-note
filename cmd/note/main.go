@@ -14,10 +14,10 @@ import (
 )
 
 type config struct {
-	Token   string  `yaml:"token"`
-	Lat     float64 `yaml:"lat"`
-	Lon     float64 `yaml:"lon"`
-	ICalURL string  `yaml:"ical_url"`
+	Token    string   `yaml:"token"`
+	Lat      float64  `yaml:"lat"`
+	Lon      float64  `yaml:"lon"`
+	ICalURLs []string `yaml:"ical_urls"`
 }
 
 func loadConfig() (config, error) {
@@ -66,11 +66,11 @@ func main() {
 	case "clock":
 		lines = clock.Format(time.Now())
 	case "calendar":
-		if cfg.ICalURL == "" {
-			fmt.Fprintf(os.Stderr, "error: ical_url required for calendar\n")
+		if len(cfg.ICalURLs) == 0 {
+			fmt.Fprintf(os.Stderr, "error: ical_urls required for calendar\n")
 			os.Exit(1)
 		}
-		lines, err = calendar.Fetch(cfg.ICalURL)
+		lines, err = calendar.Fetch(cfg.ICalURLs)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", os.Args[1])
 		os.Exit(1)
