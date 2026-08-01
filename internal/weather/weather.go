@@ -115,6 +115,30 @@ func descFromNWS(raw string) string {
 	}
 }
 
+func isFahrenheitCountry(lat, lon float64) bool {
+	// Continental US
+	if lat >= 24 && lat <= 49.5 && lon >= -125 && lon <= -66 {
+		return true
+	}
+	// Alaska
+	if lat >= 54 && lat <= 72 && lon >= -168 && lon <= -130 {
+		return true
+	}
+	// Hawaii
+	if lat >= 18 && lat <= 23 && lon >= -161 && lon <= -154 {
+		return true
+	}
+	// Puerto Rico + US Virgin Islands
+	if lat >= 17 && lat <= 18.5 && lon >= -68 && lon <= -64 {
+		return true
+	}
+	// Liberia (the one non-island °F country)
+	if lat >= 4 && lat <= 8.5 && lon >= -11.5 && lon <= -7.5 {
+		return true
+	}
+	return false
+}
+
 func isUS(lat, lon float64) bool {
 	return lat >= 24 && lat <= 50 && lon >= -125 && lon <= -66
 }
@@ -136,7 +160,7 @@ func getJSON(ctx context.Context, url string, target interface{}) error {
 	return json.NewDecoder(resp.Body).Decode(target)
 }
 
-func fetchNWS(lat, lon float64) (tempF float64, desc string, err error) {
+func fetchNWS(lat, lon float64, fahrenheit bool) (temp float64, desc string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
@@ -182,17 +206,25 @@ func fetchNWS(lat, lon float64) (tempF float64, desc string, err error) {
 		return 0, "", fmt.Errorf("nws: no temperature in observation")
 	}
 	tempC := *obsResp.Properties.Temperature.Value
-	tempF = math.Round(tempC*9/5 + 32)
+	if fahrenheit {
+		temp = math.Round(tempC*9/5 + 32)
+	} else {
+		temp = math.Round(tempC)
+	}
 	desc = descFromNWS(obsResp.Properties.TextDescription)
-	return tempF, desc, nil
+	return temp, desc, nil
 }
 
-func fetchOpenMeteo(lat, lon float64) (tempF float64, desc string, color int, err error) {
+func fetchOpenMeteo(lat, lon float64, fahrenheit bool) (temp float64, desc string, color int, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	url := fmt.Sprintf("%s?latitude=%f&longitude=%f&current=temperature_2m,weathercode&temperature_unit=fahrenheit",
-		openMeteoURL, lat, lon)
+	unit := "celsius"
+	if fahrenheit {
+		unit = "fahrenheit"
+	}
+	url := fmt.Sprintf("%s?latitude=%f&longitude=%f&current=temperature_2m,weathercode&temperature_unit=%s",
+		openMeteoURL, lat, lon, unit)
 
 	var data struct {
 		Current struct {
@@ -219,37 +251,43 @@ func fetchOpenMeteo(lat, lon float64) (tempF float64, desc string, color int, er
 
 func Fetch(lat, lon float64) ([3]string, error) {
 	now := time.Now()
-	var tempF float64
+	var temp float64
 	var desc string
 	var color int
 
+	fahrenheit := isFahrenheitCountry(lat, lon)
+	unit := "C"
+	if fahrenheit {
+		unit = "F"
+	}
+
 	if isUS(lat, lon) {
-		t, d, err := fetchNWS(lat, lon)
+		t, d, err := fetchNWS(lat, lon, fahrenheit)
 		if err != nil {
 			var t2 float64
 			var d2 string
 			var c2 int
-			t2, d2, c2, err = fetchOpenMeteo(lat, lon)
+			t2, d2, c2, err = fetchOpenMeteo(lat, lon, fahrenheit)
 			if err != nil {
 				return [3]string{}, err
 			}
-			tempF, desc, color = t2, d2, c2
+			temp, desc, color = t2, d2, c2
 		} else {
-			tempF = t
+			temp = t
 			desc = d
 			color = colorForDesc(d)
 		}
 	} else {
-		t, d, c, err := fetchOpenMeteo(lat, lon)
+		t, d, c, err := fetchOpenMeteo(lat, lon, fahrenheit)
 		if err != nil {
 			return [3]string{}, err
 		}
-		tempF, desc, color = t, d, c
+		temp, desc, color = t, d, c
 	}
 
 	return [3]string{
 		layout.ColorRow(color),
-		layout.Center(fmt.Sprintf("%.0fF  %s", tempF, now.Format("Mon Jan 2")), layout.Cols),
+		layout.Center(fmt.Sprintf("%.0f%s  %s", temp, unit, now.Format("Mon Jan 2")), layout.Cols),
 		layout.Center(desc, layout.Cols),
 	}, nil
 }
