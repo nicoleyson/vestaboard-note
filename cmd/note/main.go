@@ -9,6 +9,7 @@ import (
 
 	"github.com/nicoleyson/vestaboard-note/internal/calendar"
 	"github.com/nicoleyson/vestaboard-note/internal/clock"
+	"github.com/nicoleyson/vestaboard-note/internal/moon"
 	"github.com/nicoleyson/vestaboard-note/internal/vestaboard"
 	"github.com/nicoleyson/vestaboard-note/internal/weather"
 )
@@ -39,7 +40,7 @@ func loadConfig() (config, error) {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "usage: note <weather|clock|calendar>\n")
+		fmt.Fprintf(os.Stderr, "usage: note <weather|clock|calendar|moon>\n")
 		os.Exit(1)
 	}
 
@@ -71,6 +72,8 @@ func main() {
 			os.Exit(1)
 		}
 		lines, err = calendar.Fetch(cfg.ICalURLs)
+	case "moon":
+		lines = moon.Format(time.Now())
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", os.Args[1])
 		os.Exit(1)
