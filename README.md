@@ -54,6 +54,8 @@ Reload your shell after adding.
 | `countdown` | Days until a configured event | `countdowns` |
 | `discogs` | A record from your collection matched to weather + time of day | `discogs_username`, `discogs_token`, `lat`, `lon` |
 | `pattern` | Random color art — stripes, checker, hearts, confetti, and more | — |
+| `sunrise` | Next sunrise or sunset time with color row | `lat`, `lon` |
+| `pollen` | Pollen level and dominant type (grass/tree/weed) with color row | `lat`, `lon` |
 | `status` | Preview all subcommands without sending to the board | — |
 
 ## Recommended crontab
@@ -81,6 +83,12 @@ Run `crontab -e` and add entries like these. Adjust the binary path to wherever 
 
 # Air quality every hour during fire season (June–October)
 0 * * 6-10 * cd ~/repos/vestaboard-note && ./note air
+
+# Pollen levels every morning during spring (March–June)
+0 7 * 3-6 * cd ~/repos/vestaboard-note && ./note pollen
+
+# Sunrise/sunset — show what's coming up next, once an hour
+0 * * * * cd ~/repos/vestaboard-note && ./note sunrise
 
 # Random pattern — good as a screensaver when nothing else is scheduled
 0 2 * * * cd ~/repos/vestaboard-note && ./note pattern
