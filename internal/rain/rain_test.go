@@ -30,3 +30,30 @@ func TestClassify(t *testing.T) {
 		}
 	}
 }
+
+func TestClassifyTrivial(t *testing.T) {
+	trivialCases := []struct {
+		prob int
+		mm   float64
+	}{
+		{0, 0}, {20, 0}, {29, 0},
+	}
+	for _, tt := range trivialCases {
+		label, _ := classify(tt.prob, tt.mm)
+		if label != "NONE" {
+			t.Errorf("classify(prob=%d, mm=%.1f) = %q, expected NONE (trivial)", tt.prob, tt.mm, label)
+		}
+	}
+	nonTrivialCases := []struct {
+		prob int
+		mm   float64
+	}{
+		{30, 0}, {60, 0}, {80, 0.1},
+	}
+	for _, tt := range nonTrivialCases {
+		label, _ := classify(tt.prob, tt.mm)
+		if label == "NONE" {
+			t.Errorf("classify(prob=%d, mm=%.1f) = NONE, expected non-trivial", tt.prob, tt.mm)
+		}
+	}
+}

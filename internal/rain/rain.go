@@ -18,7 +18,7 @@ type apiResponse struct {
 	} `json:"current"`
 }
 
-func Fetch(lat, lon float64) ([3]string, error) {
+func Fetch(lat, lon float64) ([3]string, bool, error) {
 	url := fmt.Sprintf(
 		"%s?latitude=%f&longitude=%f&current=precipitation,precipitation_probability",
 		apiURL, lat, lon,
@@ -26,28 +26,29 @@ func Fetch(lat, lon float64) ([3]string, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Get(url)
 	if err != nil {
-		return [3]string{}, err
+		return [3]string{}, false, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return [3]string{}, fmt.Errorf("open-meteo status %d", resp.StatusCode)
+		return [3]string{}, false, fmt.Errorf("open-meteo status %d", resp.StatusCode)
 	}
 
 	var data apiResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return [3]string{}, err
+		return [3]string{}, false, err
 	}
 
 	prob := data.Current.PrecipitationProb
 	mm := data.Current.Precipitation
 	intensity, color := classify(prob, mm)
 
+	trivial := intensity == "NONE"
 	return [3]string{
 		layout.ColorRow(color),
 		layout.Center(fmt.Sprintf("RAIN  %d%%", prob), layout.Cols),
 		layout.Center(intensity, layout.Cols),
-	}, nil
+	}, trivial, nil
 }
 
 // classify returns an intensity label and a Vestaboard color code.
