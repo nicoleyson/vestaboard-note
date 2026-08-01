@@ -1,6 +1,7 @@
 package layout
 
 import (
+	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -125,9 +126,13 @@ func Truncate(s string, n int) string {
 	return string(runes[:n-1]) + "~"
 }
 
+var shortcodeRe = regexp.MustCompile(`:[a-zA-Z0-9_+-]+:`)
+
 func StripEmoji(s string) string {
 	s = strings.ReplaceAll(s, "❤️", "{62}")
 	s = strings.ReplaceAll(s, "❤", "{62}")
+
+	s = shortcodeRe.ReplaceAllString(s, "")
 
 	var b strings.Builder
 	for _, r := range s {
