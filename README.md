@@ -70,10 +70,8 @@ Times are in your system timezone. On macOS this matches your local time automat
 TZ=America/Los_Angeles
 
 # ── Morning routine ──────────────────────────────────────────────
-0 8 * * * cd ~/repos/vestaboard-note && ./note moon
 5 8 * * * cd ~/repos/vestaboard-note && ./note onthisday
-10 8 * * * cd ~/repos/vestaboard-note && ./note rain
-15 8 * * * cd ~/repos/vestaboard-note && ./note countdown
+10 8 * * * cd ~/repos/vestaboard-note && ./note countdown
 
 # ── Throughout the day ───────────────────────────────────────────
 # Weather every 30 minutes
@@ -88,12 +86,19 @@ TZ=America/Los_Angeles
 # UV index during peak hours (offset to avoid collision)
 4 10-15 * * * cd ~/repos/vestaboard-note && ./note uv
 
+# Rain check during rainy season (October–May)
+10 8 * 1-5,10-12 * cd ~/repos/vestaboard-note && ./note rain
+
 # ── Seasonal ─────────────────────────────────────────────────────
 # Air quality every hour during fire season (June–October)
 6 * * 6-10 * cd ~/repos/vestaboard-note && ./note air
 
 # Pollen levels every morning during spring (March–June)
 20 8 * 3-6 * cd ~/repos/vestaboard-note && ./note pollen
+
+# ── Evening ──────────────────────────────────────────────────────
+# Moon phase at 9pm — best appreciated at night
+0 21 * * * cd ~/repos/vestaboard-note && ./note moon
 
 # ── Screensaver ──────────────────────────────────────────────────
 0 0 * * * cd ~/repos/vestaboard-note && ./note pattern
