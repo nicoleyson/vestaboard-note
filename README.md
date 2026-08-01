@@ -96,9 +96,6 @@ Times are in your system timezone. On macOS this matches your local time automat
 # UV index during peak hours — only meaningful when the sun is up
 0 10-15 * * * cd ~/repos/vestaboard-note && ./note uv
 
-# Discogs vibe check at each time-of-day transition
-0 9,12,17,20,23 * * * cd ~/repos/vestaboard-note && ./note discogs
-
 # ── Seasonal ─────────────────────────────────────────────────────
 # Air quality every hour during fire season (June–October)
 0 * * 6-10 * cd ~/repos/vestaboard-note && ./note air
