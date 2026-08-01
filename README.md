@@ -42,23 +42,23 @@ Reload your shell after adding.
 
 ## Subcommands
 
-| Command | What it shows | Requires |
-|---|---|---|
-| `weather` | Current conditions — temp, sky, color row | `lat`, `lon` |
-| `clock` | Date and time | — |
-| `calendar` | Next upcoming event | `ical_urls` |
-| `moon` | Lunar phase with illumination color split | — |
-| `air` | Air quality index with color row | `lat`, `lon` |
-| `flights` | Aircraft currently overhead | `lat`, `lon` |
-| `onthisday` | A historical event from today's date | — |
-| `countdown` | Days until a configured event | `countdowns` |
-| `discogs` | A record from your collection matched to weather + time of day | `discogs_username`, `discogs_token`, `lat`, `lon` |
-| `pattern` | Random color art — stripes, checker, hearts, confetti, and more | — |
-| `sunrise` | Next sunrise or sunset time with color row | `lat`, `lon` |
-| `pollen` | Pollen level and dominant type (grass/tree/weed) with color row | `lat`, `lon` |
-| `uv` | UV index with category color row (green→yellow→orange→red→violet) | `lat`, `lon` |
-| `rain` | Precipitation probability and intensity (none/light/moderate/heavy) with color row | `lat`, `lon` |
-| `status` | Preview all subcommands without sending to the board | — |
+| Command | What it shows | Timing | Requires |
+|---|---|---|---|
+| `weather` | Current conditions — temp, sky, color row | Real observed data from nearest airport station, updated every ~30–60 min | `lat`, `lon` |
+| `clock` | Date and time | Point in time | — |
+| `calendar` | Next upcoming event | Point in time | `ical_urls` |
+| `moon` | Lunar phase with illumination color split | Point in time | — |
+| `air` | Air quality index with color row | Point in time (hourly model) | `lat`, `lon` |
+| `flights` | Aircraft currently overhead | Point in time | `lat`, `lon` |
+| `onthisday` | A historical event from today's date | Today's date | — |
+| `countdown` | Days until a configured event | Point in time | `countdowns` |
+| `discogs` | A record from your collection matched to weather + time of day | Point in time | `discogs_username`, `discogs_token`, `lat`, `lon` |
+| `pattern` | Random color art — stripes, checker, hearts, confetti, and more | — | — |
+| `sunrise` | Next sunrise or sunset time with color row | Calculated astronomical time | `lat`, `lon` |
+| `pollen` | Pollen level and dominant type (grass/tree/weed) with color row | Point in time (hourly model) | `lat`, `lon` |
+| `uv` | UV index with category color row (green→yellow→orange→red→violet) | Point in time (hourly model) | `lat`, `lon` |
+| `rain` | Precipitation probability and intensity (none/light/moderate/heavy) with color row | Point in time (hourly model) | `lat`, `lon` |
+| `status` | Preview all subcommands without sending to the board | — | — |
 
 ## Recommended crontab
 
