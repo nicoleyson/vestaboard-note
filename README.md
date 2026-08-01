@@ -64,6 +64,8 @@ Reload your shell after adding.
 
 Run `crontab -e` and add entries like these. Adjust the binary path to wherever you built `note`.
 
+Times are in your system timezone. On macOS this matches your local time automatically. On Linux servers that run in UTC, add `TZ=America/Los_Angeles` (or your timezone) as the first line of your crontab.
+
 ```cron
 # ── Morning routine ──────────────────────────────────────────────
 # Moon phase at 8am — changes slowly, once a day is plenty
