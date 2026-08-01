@@ -1,6 +1,6 @@
 module github.com/nicoleyson/vestaboard-note
 
-go 1.25.4
+go 1.21
 
 require (
 	github.com/bounoable/ical v0.4.3
