@@ -23,17 +23,17 @@ make build
 
 ## Subcommands
 
-```sh
-./note weather     # current conditions (METAR, real observations, global)
-./note clock       # date + time
-./note calendar    # next event from your iCal feed
-./note moon        # current lunar phase
-./note air         # air quality index
-./note flights     # aircraft currently overhead
-./note onthisday   # a historical event from today's date
-./note countdown   # days until a configured event
-./note discogs     # a record from your Discogs collection matched to weather + time of day
-```
+| Command | What it shows | Requires |
+|---|---|---|
+| `weather` | Current conditions — temp, sky, color row | `lat`, `lon` |
+| `clock` | Date and time | — |
+| `calendar` | Next upcoming event | `ical_urls` |
+| `moon` | Lunar phase with illumination color split | — |
+| `air` | Air quality index with color row | `lat`, `lon` |
+| `flights` | Aircraft currently overhead | `lat`, `lon` |
+| `onthisday` | A historical event from today's date | — |
+| `countdown` | Days until a configured event | `countdowns` |
+| `discogs` | A record from your collection matched to weather + time of day | `discogs_username`, `discogs_token`, `lat`, `lon` |
 
 ## Recommended crontab
 
