@@ -19,6 +19,7 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/onthisday"
 	"github.com/nicoleyson/vestaboard-note/internal/pollen"
 	"github.com/nicoleyson/vestaboard-note/internal/sunrise"
+	"github.com/nicoleyson/vestaboard-note/internal/uv"
 	"github.com/nicoleyson/vestaboard-note/internal/vestaboard"
 	"github.com/nicoleyson/vestaboard-note/internal/weather"
 )
@@ -26,7 +27,7 @@ import (
 var subcommands = []string{
 	"weather", "clock", "calendar", "moon", "air",
 	"flights", "onthisday", "countdown", "discogs", "pattern",
-	"sunrise", "pollen",
+	"sunrise", "pollen", "uv",
 	"status", "completion",
 }
 
@@ -98,11 +99,15 @@ func runStatus(cfg config) {
 
 		lines, err = pollen.Fetch(cfg.Lat, cfg.Lon)
 		printLines("pollen", lines, err)
+
+		lines, err = uv.Fetch(cfg.Lat, cfg.Lon)
+		printLines("uv", lines, err)
 	} else {
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "air")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "flights")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "sunrise")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "pollen")
+		fmt.Printf("  %-12s skipped (no lat/lon)\n", "uv")
 	}
 
 	lines, err = onthisday.Fetch(now)
@@ -123,7 +128,7 @@ func runStatus(cfg config) {
 const bashCompletion = `_note_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local cmds="weather clock calendar moon air flights onthisday countdown discogs pattern sunrise pollen status completion"
+    local cmds="weather clock calendar moon air flights onthisday countdown discogs pattern sunrise pollen uv status completion"
     local patterns="random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow"
     if [[ "${prev}" == "pattern" ]]; then
         COMPREPLY=($(compgen -W "${patterns}" -- "${cur}"))
@@ -151,6 +156,7 @@ _note() {
         'pattern:random art and color patterns'
         'sunrise:next sunrise or sunset time'
         'pollen:pollen levels by type'
+        'uv:uv index with color scale'
         'status:preview all subcommands without sending'
         'completion:print shell completion script'
     )
@@ -190,6 +196,7 @@ complete -c note -n __fish_use_subcommand -a discogs    -d 'Record matched to we
 complete -c note -n __fish_use_subcommand -a pattern    -d 'Random art and color patterns'
 complete -c note -n __fish_use_subcommand -a sunrise    -d 'Next sunrise or sunset time'
 complete -c note -n __fish_use_subcommand -a pollen     -d 'Pollen levels by type'
+complete -c note -n __fish_use_subcommand -a uv         -d 'UV index with color scale'
 complete -c note -n __fish_use_subcommand -a status     -d 'Preview all subcommands without sending'
 complete -c note -n __fish_use_subcommand -a completion -d 'Print shell completion script'
 complete -c note -n '__fish_seen_subcommand_from pattern' -a 'random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow'
@@ -305,6 +312,12 @@ func main() {
 			os.Exit(1)
 		}
 		lines, err = pollen.Fetch(cfg.Lat, cfg.Lon)
+	case "uv":
+		if cfg.Lat == 0 || cfg.Lon == 0 {
+			fmt.Fprintf(os.Stderr, "error: lat and lon required for uv\n")
+			os.Exit(1)
+		}
+		lines, err = uv.Fetch(cfg.Lat, cfg.Lon)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", cmd)
 		os.Exit(1)
