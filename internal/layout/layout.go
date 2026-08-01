@@ -61,8 +61,8 @@ func Center(s string, width int) string {
 		return string(runes[:width])
 	}
 	total := width - len(runes)
-	right := total / 2
-	left := total - right
+	left := total / 2
+	right := total - left
 	return strings.Repeat(" ", left) + string(runes) + strings.Repeat(" ", right)
 }
 
