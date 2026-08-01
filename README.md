@@ -58,6 +58,7 @@ Reload your shell after adding.
 | `pollen` | Pollen level and dominant type (grass/tree/weed) with color row | Point in time (hourly model) | `lat`, `lon` |
 | `uv` | UV index with category color row (green→yellow→orange→red→violet) | Point in time (hourly model) | `lat`, `lon` |
 | `rain` | Precipitation probability and intensity (none/light/moderate/heavy) with color row | Point in time (hourly model) | `lat`, `lon` |
+| `season` | Current astronomical season with color row and phase label | Calculated from equinox/solstice math | — |
 | `status` | Preview all subcommands without sending to the board | — | — |
 
 ## Recommended crontab
