@@ -7,18 +7,23 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/nicoleyson/vestaboard-note/internal/air"
 	"github.com/nicoleyson/vestaboard-note/internal/calendar"
 	"github.com/nicoleyson/vestaboard-note/internal/clock"
+	"github.com/nicoleyson/vestaboard-note/internal/countdown"
+	"github.com/nicoleyson/vestaboard-note/internal/flights"
 	"github.com/nicoleyson/vestaboard-note/internal/moon"
+	"github.com/nicoleyson/vestaboard-note/internal/onthisday"
 	"github.com/nicoleyson/vestaboard-note/internal/vestaboard"
 	"github.com/nicoleyson/vestaboard-note/internal/weather"
 )
 
 type config struct {
-	Token    string   `yaml:"token"`
-	Lat      float64  `yaml:"lat"`
-	Lon      float64  `yaml:"lon"`
-	ICalURLs []string `yaml:"ical_urls"`
+	Token      string              `yaml:"token"`
+	Lat        float64             `yaml:"lat"`
+	Lon        float64             `yaml:"lon"`
+	ICalURLs   []string            `yaml:"ical_urls"`
+	Countdowns []countdown.Event   `yaml:"countdowns"`
 }
 
 func loadConfig() (config, error) {
@@ -40,7 +45,7 @@ func loadConfig() (config, error) {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "usage: note <weather|clock|calendar|moon>\n")
+		fmt.Fprintf(os.Stderr, "usage: note <weather|clock|calendar|moon|air|flights|onthisday|countdown>\n")
 		os.Exit(1)
 	}
 
@@ -74,6 +79,22 @@ func main() {
 		lines, err = calendar.Fetch(cfg.ICalURLs)
 	case "moon":
 		lines = moon.Format(time.Now())
+	case "air":
+		if cfg.Lat == 0 || cfg.Lon == 0 {
+			fmt.Fprintf(os.Stderr, "error: lat and lon required for air\n")
+			os.Exit(1)
+		}
+		lines, err = air.Fetch(cfg.Lat, cfg.Lon)
+	case "flights":
+		if cfg.Lat == 0 || cfg.Lon == 0 {
+			fmt.Fprintf(os.Stderr, "error: lat and lon required for flights\n")
+			os.Exit(1)
+		}
+		lines, err = flights.Fetch(cfg.Lat, cfg.Lon)
+	case "onthisday":
+		lines, err = onthisday.Fetch(time.Now())
+	case "countdown":
+		lines = countdown.Format(cfg.Countdowns, time.Now())
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", os.Args[1])
 		os.Exit(1)
