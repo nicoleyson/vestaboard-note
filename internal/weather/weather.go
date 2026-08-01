@@ -12,108 +12,11 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/layout"
 )
 
-const openMeteoURL = "https://api.open-meteo.com/v1/forecast"
-
-var weatherDescriptions = map[int]string{
-	0: "CLEAR", 1: "CLEAR", 2: "CLOUDY", 3: "OVERCAST",
-	45: "FOG", 48: "FOG",
-	51: "DRIZZLE", 53: "DRIZZLE", 55: "DRIZZLE",
-	61: "RAIN", 63: "RAIN", 65: "RAIN",
-	71: "SNOW", 73: "SNOW", 75: "SNOW", 77: "SNOW",
-	80: "SHOWERS", 81: "SHOWERS", 82: "SHOWERS",
-	85: "SNOW SHOWERS", 86: "SNOW SHOWERS",
-	95: "THUNDERSTORM", 96: "THUNDERSTORM", 99: "THUNDERSTORM",
-}
-
-func colorForCode(wmoCode int) int {
-	switch {
-	case wmoCode <= 1:
-		return 65
-	case wmoCode <= 3:
-		return 69
-	case wmoCode <= 48:
-		return 69
-	case wmoCode <= 55:
-		return 67
-	case wmoCode <= 65:
-		return 67
-	case wmoCode <= 77:
-		return 69
-	case wmoCode <= 82:
-		return 67
-	case wmoCode <= 86:
-		return 69
-	case wmoCode >= 95:
-		return 68
-	default:
-		return 64
-	}
-}
-
-func colorForDesc(desc string) int {
-	d := strings.ToUpper(desc)
-	switch {
-	case strings.Contains(d, "THUNDER") || strings.Contains(d, "STORM"):
-		return 68
-	case strings.Contains(d, "SNOW") || strings.Contains(d, "ICE") || strings.Contains(d, "BLIZZARD") || strings.Contains(d, "FLURR"):
-		return 69
-	case strings.Contains(d, "RAIN") || strings.Contains(d, "DRIZZLE") || strings.Contains(d, "SHOWER"):
-		return 67
-	case strings.Contains(d, "FOG") || strings.Contains(d, "MIST") || strings.Contains(d, "HAZE"):
-		return 69
-	case strings.Contains(d, "CLOUD") || strings.Contains(d, "OVERCAST"):
-		return 69
-	case strings.Contains(d, "CLEAR") || strings.Contains(d, "SUNNY") || strings.Contains(d, "FAIR"):
-		return 65
-	default:
-		return 64
-	}
-}
-
-func descFromNWS(raw string) string {
-	d := strings.ToUpper(raw)
-	switch {
-	case strings.Contains(d, "THUNDER"):
-		return "THUNDERSTORM"
-	case strings.Contains(d, "BLIZZARD"):
-		return "BLIZZARD"
-	case strings.Contains(d, "SNOW SHOWER") || strings.Contains(d, "SNOW SHOWERS"):
-		return "SNOW SHOWERS"
-	case strings.Contains(d, "SNOW"):
-		return "SNOW"
-	case strings.Contains(d, "FLURR"):
-		return "FLURRIES"
-	case strings.Contains(d, "ICE") || strings.Contains(d, "SLEET") || strings.Contains(d, "FREEZING"):
-		return "ICE"
-	case strings.Contains(d, "SHOWER"):
-		return "SHOWERS"
-	case strings.Contains(d, "DRIZZLE"):
-		return "DRIZZLE"
-	case strings.Contains(d, "RAIN"):
-		return "RAIN"
-	case strings.Contains(d, "FOG"):
-		return "FOG"
-	case strings.Contains(d, "MIST"):
-		return "MIST"
-	case strings.Contains(d, "HAZE"):
-		return "HAZE"
-	case strings.Contains(d, "OVERCAST"):
-		return "OVERCAST"
-	case strings.Contains(d, "CLOUD") || strings.Contains(d, "MOSTLY CLOUDY") || strings.Contains(d, "PARTLY CLOUDY"):
-		return "CLOUDY"
-	case strings.Contains(d, "CLEAR") || strings.Contains(d, "SUNNY") || strings.Contains(d, "FAIR"):
-		return "CLEAR"
-	default:
-		if raw == "" {
-			return "UNKNOWN"
-		}
-		words := strings.Fields(d)
-		if len(words) > 0 {
-			return words[0]
-		}
-		return "UNKNOWN"
-	}
-}
+const (
+	metarStationsURL = "https://aviationweather.gov/api/data/airport"
+	metarURL         = "https://aviationweather.gov/api/data/metar"
+	metarSearchDelta = 2.0
+)
 
 func isFahrenheitCountry(lat, lon float64) bool {
 	// Continental US
@@ -132,15 +35,11 @@ func isFahrenheitCountry(lat, lon float64) bool {
 	if lat >= 17 && lat <= 18.5 && lon >= -68 && lon <= -64 {
 		return true
 	}
-	// Liberia (the one non-island °F country)
+	// Liberia
 	if lat >= 4 && lat <= 8.5 && lon >= -11.5 && lon <= -7.5 {
 		return true
 	}
 	return false
-}
-
-func isUS(lat, lon float64) bool {
-	return lat >= 24 && lat <= 50 && lon >= -125 && lon <= -66
 }
 
 func getJSON(ctx context.Context, url string, target interface{}) error {
@@ -160,130 +59,132 @@ func getJSON(ctx context.Context, url string, target interface{}) error {
 	return json.NewDecoder(resp.Body).Decode(target)
 }
 
-func fetchNWS(lat, lon float64, fahrenheit bool) (temp float64, desc string, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
+func nearestStation(ctx context.Context, lat, lon float64) (string, error) {
+	delta := metarSearchDelta
+	for attempts := 0; attempts < 3; attempts++ {
+		url := fmt.Sprintf("%s?bbox=%.4f,%.4f,%.4f,%.4f&format=json",
+			metarStationsURL, lat-delta, lon-delta, lat+delta, lon+delta)
 
-	var pointsResp struct {
-		Properties struct {
-			ObservationStations string `json:"observationStations"`
-		} `json:"properties"`
+		var stations []struct {
+			IcaoID string  `json:"icaoId"`
+			Lat    float64 `json:"lat"`
+			Lon    float64 `json:"lon"`
+		}
+		if err := getJSON(ctx, url, &stations); err != nil {
+			return "", err
+		}
+		if len(stations) > 0 {
+			best := stations[0]
+			bestDist := dist(lat, lon, best.Lat, best.Lon)
+			for _, s := range stations[1:] {
+				if d := dist(lat, lon, s.Lat, s.Lon); d < bestDist {
+					best, bestDist = s, d
+				}
+			}
+			return best.IcaoID, nil
+		}
+		delta *= 2
 	}
-	pointsURL := fmt.Sprintf("https://api.weather.gov/points/%.4f,%.4f", lat, lon)
-	if err = getJSON(ctx, pointsURL, &pointsResp); err != nil {
-		return 0, "", fmt.Errorf("nws points: %w", err)
-	}
-
-	var stationsResp struct {
-		Features []struct {
-			Properties struct {
-				StationIdentifier string `json:"stationIdentifier"`
-			} `json:"properties"`
-		} `json:"features"`
-	}
-	if err = getJSON(ctx, pointsResp.Properties.ObservationStations, &stationsResp); err != nil {
-		return 0, "", fmt.Errorf("nws stations: %w", err)
-	}
-	if len(stationsResp.Features) == 0 {
-		return 0, "", fmt.Errorf("nws: no stations found")
-	}
-	stationID := stationsResp.Features[0].Properties.StationIdentifier
-
-	var obsResp struct {
-		Properties struct {
-			Temperature struct {
-				Value *float64 `json:"value"`
-			} `json:"temperature"`
-			TextDescription string `json:"textDescription"`
-		} `json:"properties"`
-	}
-	obsURL := fmt.Sprintf("https://api.weather.gov/stations/%s/observations/latest", stationID)
-	if err = getJSON(ctx, obsURL, &obsResp); err != nil {
-		return 0, "", fmt.Errorf("nws observation: %w", err)
-	}
-
-	if obsResp.Properties.Temperature.Value == nil {
-		return 0, "", fmt.Errorf("nws: no temperature in observation")
-	}
-	tempC := *obsResp.Properties.Temperature.Value
-	if fahrenheit {
-		temp = math.Round(tempC*9/5 + 32)
-	} else {
-		temp = math.Round(tempC)
-	}
-	desc = descFromNWS(obsResp.Properties.TextDescription)
-	return temp, desc, nil
+	return "", fmt.Errorf("no metar station found near %.4f,%.4f", lat, lon)
 }
 
-func fetchOpenMeteo(lat, lon float64, fahrenheit bool) (temp float64, desc string, color int, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+func dist(lat1, lon1, lat2, lon2 float64) float64 {
+	dlat := lat1 - lat2
+	dlon := lon1 - lon2
+	return dlat*dlat + dlon*dlon
+}
 
-	unit := "celsius"
-	if fahrenheit {
-		unit = "fahrenheit"
+func descFromMetar(cover, rawOb string) string {
+	raw := strings.ToUpper(rawOb)
+	switch {
+	case strings.Contains(raw, " TS"):
+		return "THUNDERSTORM"
+	case strings.Contains(raw, " FZRA") || strings.Contains(raw, " FZDZ"):
+		return "FREEZING RAIN"
+	case strings.Contains(raw, " BLSN") || strings.Contains(raw, " BLIZZARD"):
+		return "BLIZZARD"
+	case strings.Contains(raw, " RASN") || strings.Contains(raw, " SNRA"):
+		return "RAIN AND SNOW"
+	case strings.Contains(raw, " SN") || strings.Contains(raw, " SG") || strings.Contains(raw, " PL"):
+		return "SNOW"
+	case strings.Contains(raw, " SHRA"):
+		return "SHOWERS"
+	case strings.Contains(raw, " RA") || strings.Contains(raw, " DZ"):
+		return "RAIN"
+	case strings.Contains(raw, " FG") || strings.Contains(raw, " BR") || strings.Contains(raw, " HZ"):
+		return "FOG"
 	}
-	url := fmt.Sprintf("%s?latitude=%f&longitude=%f&current=temperature_2m,weathercode&temperature_unit=%s",
-		openMeteoURL, lat, lon, unit)
+	switch cover {
+	case "OVC":
+		return "OVERCAST"
+	case "BKN":
+		return "CLOUDY"
+	case "SCT":
+		return "PARTLY CLOUDY"
+	case "FEW":
+		return "MOSTLY CLEAR"
+	default:
+		return "CLEAR"
+	}
+}
 
-	var data struct {
-		Current struct {
-			Temperature float64 `json:"temperature_2m"`
-			WeatherCode int     `json:"weathercode"`
-		} `json:"current"`
+func colorForDesc(desc string) int {
+	d := strings.ToUpper(desc)
+	switch {
+	case strings.Contains(d, "THUNDER"):
+		return 68
+	case strings.Contains(d, "SNOW") || strings.Contains(d, "ICE") || strings.Contains(d, "BLIZZARD") || strings.Contains(d, "FREEZ"):
+		return 69
+	case strings.Contains(d, "RAIN") || strings.Contains(d, "DRIZZLE") || strings.Contains(d, "SHOWER"):
+		return 67
+	case strings.Contains(d, "FOG") || strings.Contains(d, "MIST") || strings.Contains(d, "HAZE"):
+		return 69
+	case strings.Contains(d, "CLOUD") || strings.Contains(d, "OVERCAST"):
+		return 69
+	case strings.Contains(d, "CLEAR") || strings.Contains(d, "SUNNY") || strings.Contains(d, "FAIR"):
+		return 65
+	default:
+		return 64
 	}
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return 0, "", 0, err
-	}
-	defer resp.Body.Close()
-	if err = json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return 0, "", 0, err
-	}
-
-	d, ok := weatherDescriptions[data.Current.WeatherCode]
-	if !ok {
-		d = fmt.Sprintf("CODE %d", data.Current.WeatherCode)
-	}
-	return data.Current.Temperature, d, colorForCode(data.Current.WeatherCode), nil
 }
 
 func Fetch(lat, lon float64) ([3]string, error) {
-	now := time.Now()
-	var temp float64
-	var desc string
-	var color int
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
 
+	stationID, err := nearestStation(ctx, lat, lon)
+	if err != nil {
+		return [3]string{}, fmt.Errorf("metar station lookup: %w", err)
+	}
+
+	url := fmt.Sprintf("%s?ids=%s&format=json", metarURL, stationID)
+	var results []struct {
+		Temp  float64 `json:"temp"`
+		Cover string  `json:"cover"`
+		RawOb string  `json:"rawOb"`
+	}
+	if err := getJSON(ctx, url, &results); err != nil {
+		return [3]string{}, fmt.Errorf("metar fetch: %w", err)
+	}
+	if len(results) == 0 {
+		return [3]string{}, fmt.Errorf("metar: no data for station %s", stationID)
+	}
+
+	obs := results[0]
 	fahrenheit := isFahrenheitCountry(lat, lon)
-	unit := "C"
+	var temp float64
+	var unit string
 	if fahrenheit {
+		temp = math.Round(obs.Temp*9/5 + 32)
 		unit = "F"
+	} else {
+		temp = math.Round(obs.Temp)
+		unit = "C"
 	}
 
-	if isUS(lat, lon) {
-		t, d, err := fetchNWS(lat, lon, fahrenheit)
-		if err != nil {
-			var t2 float64
-			var d2 string
-			var c2 int
-			t2, d2, c2, err = fetchOpenMeteo(lat, lon, fahrenheit)
-			if err != nil {
-				return [3]string{}, err
-			}
-			temp, desc, color = t2, d2, c2
-		} else {
-			temp = t
-			desc = d
-			color = colorForDesc(d)
-		}
-	} else {
-		t, d, c, err := fetchOpenMeteo(lat, lon, fahrenheit)
-		if err != nil {
-			return [3]string{}, err
-		}
-		temp, desc, color = t, d, c
-	}
+	desc := descFromMetar(obs.Cover, obs.RawOb)
+	color := colorForDesc(desc)
+	now := time.Now()
 
 	return [3]string{
 		layout.ColorRow(color),
