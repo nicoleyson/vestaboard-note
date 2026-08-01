@@ -21,6 +21,25 @@ Set `VESTABOARD_CONFIG=/path/to/config.yaml` to use a config file in a non-defau
 make build
 ```
 
+## Install
+
+```sh
+make install        # builds and copies note to /usr/local/bin
+make uninstall      # removes it
+```
+
+`make install` prints suggested crontab entries and shell completion instructions when it finishes.
+
+## Shell completion
+
+```sh
+note completion bash >> ~/.bash_profile   # bash
+note completion zsh  >> ~/.zshrc          # zsh
+note completion fish > ~/.config/fish/completions/note.fish  # fish
+```
+
+Reload your shell after adding.
+
 ## Subcommands
 
 | Command | What it shows | Requires |
@@ -34,6 +53,7 @@ make build
 | `onthisday` | A historical event from today's date | — |
 | `countdown` | Days until a configured event | `countdowns` |
 | `discogs` | A record from your collection matched to weather + time of day | `discogs_username`, `discogs_token`, `lat`, `lon` |
+| `status` | Preview all subcommands without sending to the board | — |
 
 ## Recommended crontab
 
