@@ -57,6 +57,7 @@ Reload your shell after adding.
 | `sunrise` | Next sunrise or sunset time with color row | `lat`, `lon` |
 | `pollen` | Pollen level and dominant type (grass/tree/weed) with color row | `lat`, `lon` |
 | `uv` | UV index with category color row (green→yellow→orange→red→violet) | `lat`, `lon` |
+| `rain` | Precipitation probability and intensity (none/light/moderate/heavy) with color row | `lat`, `lon` |
 | `status` | Preview all subcommands without sending to the board | — |
 
 ## Recommended crontab
