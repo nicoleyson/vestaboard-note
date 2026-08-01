@@ -53,6 +53,7 @@ Reload your shell after adding.
 | `onthisday` | A historical event from today's date | — |
 | `countdown` | Days until a configured event | `countdowns` |
 | `discogs` | A record from your collection matched to weather + time of day | `discogs_username`, `discogs_token`, `lat`, `lon` |
+| `pattern` | Random color art — stripes, checker, hearts, confetti, and more | — |
 | `status` | Preview all subcommands without sending to the board | — |
 
 ## Recommended crontab
@@ -80,6 +81,9 @@ Run `crontab -e` and add entries like these. Adjust the binary path to wherever 
 
 # Air quality every hour during fire season (June–October)
 0 * * 6-10 * cd ~/repos/vestaboard-note && ./note air
+
+# Random pattern — good as a screensaver when nothing else is scheduled
+0 2 * * * cd ~/repos/vestaboard-note && ./note pattern
 ```
 
 A simple "set and forget" setup that covers most of the day:
