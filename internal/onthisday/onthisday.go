@@ -41,7 +41,11 @@ func Fetch(t time.Time) ([3]string, error) {
 	if resp.StatusCode != http.StatusOK {
 		var buf bytes.Buffer
 		buf.ReadFrom(resp.Body)
-		return [3]string{}, fmt.Errorf("wikipedia api %d: %s", resp.StatusCode, buf.String()[:min(len(buf.String()), 80)])
+		s := buf.String()
+		if len(s) > 80 {
+			s = s[:80]
+		}
+		return [3]string{}, fmt.Errorf("wikipedia api %d: %s", resp.StatusCode, s)
 	}
 
 	var data apiResponse
@@ -67,8 +71,6 @@ func Fetch(t time.Time) ([3]string, error) {
 	}, nil
 }
 
-// pickEvent prefers events whose text fills row 3 cleanly without truncation.
-// Falls back to a random pick if no clean fit exists.
 func pickEvent(events []wikiEvent) wikiEvent {
 	var clean []int
 	for i, e := range events {
