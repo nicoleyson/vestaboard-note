@@ -1,6 +1,8 @@
 token: YOUR_TOKEN_HERE
 lat: 37.7749
 lon: -122.4194
+discogs_token: YOUR_DISCOGS_TOKEN_HERE
+discogs_username: your_discogs_username
 ical_urls:
   - https://calendar.google.com/calendar/ical/your%40gmail.com/private-abc123/basic.ics
   - https://calendar.google.com/calendar/ical/second%40gmail.com/private-xyz789/basic.ics

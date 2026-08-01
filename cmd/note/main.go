@@ -11,6 +11,7 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/calendar"
 	"github.com/nicoleyson/vestaboard-note/internal/clock"
 	"github.com/nicoleyson/vestaboard-note/internal/countdown"
+	"github.com/nicoleyson/vestaboard-note/internal/discogs"
 	"github.com/nicoleyson/vestaboard-note/internal/flights"
 	"github.com/nicoleyson/vestaboard-note/internal/moon"
 	"github.com/nicoleyson/vestaboard-note/internal/onthisday"
@@ -19,11 +20,13 @@ import (
 )
 
 type config struct {
-	Token      string              `yaml:"token"`
-	Lat        float64             `yaml:"lat"`
-	Lon        float64             `yaml:"lon"`
-	ICalURLs   []string            `yaml:"ical_urls"`
-	Countdowns []countdown.Event   `yaml:"countdowns"`
+	Token           string            `yaml:"token"`
+	Lat             float64           `yaml:"lat"`
+	Lon             float64           `yaml:"lon"`
+	ICalURLs        []string          `yaml:"ical_urls"`
+	Countdowns      []countdown.Event `yaml:"countdowns"`
+	DiscogsToken    string            `yaml:"discogs_token"`
+	DiscogsUsername string            `yaml:"discogs_username"`
 }
 
 func loadConfig() (config, error) {
@@ -45,7 +48,7 @@ func loadConfig() (config, error) {
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintf(os.Stderr, "usage: note <weather|clock|calendar|moon|air|flights|onthisday|countdown>\n")
+		fmt.Fprintf(os.Stderr, "usage: note <weather|clock|calendar|moon|air|flights|onthisday|countdown|discogs>\n")
 		os.Exit(1)
 	}
 
@@ -95,6 +98,16 @@ func main() {
 		lines, err = onthisday.Fetch(time.Now())
 	case "countdown":
 		lines = countdown.Format(cfg.Countdowns, time.Now())
+	case "discogs":
+		if cfg.DiscogsToken == "" || cfg.DiscogsUsername == "" {
+			fmt.Fprintf(os.Stderr, "error: discogs_token and discogs_username required for discogs\n")
+			os.Exit(1)
+		}
+		if cfg.Lat == 0 || cfg.Lon == 0 {
+			fmt.Fprintf(os.Stderr, "error: lat and lon required for discogs\n")
+			os.Exit(1)
+		}
+		lines, err = discogs.Fetch(cfg.DiscogsUsername, cfg.DiscogsToken, cfg.Lat, cfg.Lon)
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n", os.Args[1])
 		os.Exit(1)
