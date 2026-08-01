@@ -1,6 +1,7 @@
 package discogs
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -36,19 +37,22 @@ type record struct {
 }
 
 func fetchCollection(username, token string) ([]record, error) {
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := &http.Client{}
 	var records []record
 	page := 1
 	for {
 		url := fmt.Sprintf("%s/users/%s/collection/folders/0/releases?per_page=100&page=%d", apiBase, username, page)
-		req, err := http.NewRequest("GET", url, nil)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 		if err != nil {
+			cancel()
 			return nil, err
 		}
 		req.Header.Set("Authorization", "Discogs token="+token)
 		req.Header.Set("User-Agent", "vestaboard-note/1.0 +https://github.com/nicoleyson/vestaboard-note")
 
 		resp, err := client.Do(req)
+		cancel()
 		if err != nil {
 			return nil, err
 		}
@@ -171,8 +175,14 @@ func Fetch(username, token string, lat, lon float64) ([3]string, error) {
 
 func fetchWMO(lat, lon float64) (int, error) {
 	url := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=weathercode", lat, lon)
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(url)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return 0, err
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return 0, err
 	}
