@@ -65,41 +65,53 @@ Reload your shell after adding.
 Run `crontab -e` and add entries like these. Adjust the binary path to wherever you built `note`.
 
 ```cron
+# ── Morning routine ──────────────────────────────────────────────
+# Moon phase at 7am — changes slowly, once a day is plenty
+0 7 * * * cd ~/repos/vestaboard-note && ./note moon
+
+# On this day at 7:05am — a fun read with your coffee
+5 7 * * * cd ~/repos/vestaboard-note && ./note onthisday
+
+# Rain check at 7:10am — is it worth grabbing an umbrella?
+10 7 * * * cd ~/repos/vestaboard-note && ./note rain
+
+# Countdown at 7:15am — good for trips, deadlines, anything you're anticipating
+15 7 * * * cd ~/repos/vestaboard-note && ./note countdown
+
+# ── Throughout the day ───────────────────────────────────────────
 # Weather every 30 minutes
 */30 * * * * cd ~/repos/vestaboard-note && ./note weather
 
-# Calendar at the top of every hour
+# Calendar at the top of every hour — what's coming up next
 0 * * * * cd ~/repos/vestaboard-note && ./note calendar
 
-# Clock every 15 minutes when you just want the time
-*/15 * * * * cd ~/repos/vestaboard-note && ./note clock
+# Clock at :15 and :45 — fills the gap between weather and calendar
+15,45 * * * * cd ~/repos/vestaboard-note && ./note clock
 
-# Moon phase once a day at 8am
-0 8 * * * cd ~/repos/vestaboard-note && ./note moon
+# Sunrise/sunset during waking hours — shows whichever is coming up next
+0 6-22 * * * cd ~/repos/vestaboard-note && ./note sunrise
 
-# On this day, once a day at 9am
-0 9 * * * cd ~/repos/vestaboard-note && ./note onthisday
+# UV index during peak hours — only meaningful when the sun is up
+0 10-15 * * * cd ~/repos/vestaboard-note && ./note uv
 
-# Discogs vibe check at the start of each time slot
+# Discogs vibe check at each time-of-day transition
 0 6,9,12,17,20,23 * * * cd ~/repos/vestaboard-note && ./note discogs
 
+# ── Seasonal ─────────────────────────────────────────────────────
 # Air quality every hour during fire season (June–October)
 0 * * 6-10 * cd ~/repos/vestaboard-note && ./note air
 
 # Pollen levels every morning during spring (March–June)
-0 7 * 3-6 * cd ~/repos/vestaboard-note && ./note pollen
+0 8 * 3-6 * cd ~/repos/vestaboard-note && ./note pollen
 
-# Sunrise/sunset — show what's coming up next, once an hour
-0 * * * * cd ~/repos/vestaboard-note && ./note sunrise
-
-# Random pattern — good as a screensaver when nothing else is scheduled
+# ── Screensaver ──────────────────────────────────────────────────
+# Random pattern at 2am — something pretty while you sleep
 0 2 * * * cd ~/repos/vestaboard-note && ./note pattern
 ```
 
-A simple "set and forget" setup that covers most of the day:
+A minimal "set and forget" setup if you just want the basics:
 
 ```cron
-# Weather every 30 min, calendar on the hour, clock in between
 */30 * * * * cd ~/repos/vestaboard-note && ./note weather
 0 * * * * cd ~/repos/vestaboard-note && ./note calendar
 15,45 * * * * cd ~/repos/vestaboard-note && ./note clock
