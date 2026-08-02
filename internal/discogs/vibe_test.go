@@ -80,7 +80,20 @@ func TestConditionBucket(t *testing.T) {
 		{86, "snow"},
 		{95, "storm"},
 		{99, "storm"},
-		{10, "clear"},
+		{10, "fog"},
+		{15, "rain"},
+		{25, "rain"},
+		{32, "storm"},
+		{38, "snow"},
+		{42, "fog"},
+		{68, "rain"},
+		{70, "rain"},
+		{78, "snow"},
+		{79, "snow"},
+		{83, "rain"},
+		{84, "rain"},
+		{87, "storm"},
+		{94, "storm"},
 	}
 	for _, tt := range tests {
 		got := conditionBucket(tt.wmo)
@@ -101,8 +114,22 @@ func TestVibeLabelNotEmpty(t *testing.T) {
 				if label == "" {
 					t.Errorf("vibeLabel(wmo=%d, season=%d, slot=%d) returned empty string", w, s, sl)
 				}
+				if len([]rune(label)) > 15 {
+					t.Errorf("vibeLabel(wmo=%d, season=%d, slot=%d) = %q (%d chars), exceeds 15", w, s, sl, label, len([]rune(label)))
+				}
 			}
 		}
+	}
+}
+
+func TestVibeLabelLateNightHasSPINSuffix(t *testing.T) {
+	label := vibeLabel(0, spring, lateNight)
+	if len(label) < 5 || label[len(label)-4:] != "SPIN" {
+		t.Errorf("lateNight label should end in SPIN, got %q", label)
+	}
+	label = vibeLabel(0, summer, night)
+	if len(label) < 5 || label[len(label)-4:] != "SPIN" {
+		t.Errorf("night label should end in SPIN, got %q", label)
 	}
 }
 

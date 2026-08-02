@@ -176,7 +176,7 @@ func Fetch(username, token string, lat, lon float64) ([3]string, error) {
 }
 
 func fetchWMO(lat, lon float64) (int, error) {
-	url := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=weathercode", lat, lon)
+	url := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=weather_code", lat, lon)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -196,7 +196,7 @@ func fetchWMO(lat, lon float64) (int, error) {
 
 	var data struct {
 		Current struct {
-			WeatherCode int `json:"weathercode"`
+			WeatherCode int `json:"weather_code"`
 		} `json:"current"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {

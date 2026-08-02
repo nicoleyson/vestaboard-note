@@ -75,9 +75,9 @@ var timeSlotKeywords = map[timeSlot][]string{
 }
 
 var timeSlotNames = map[timeSlot]string{
-	earlyMorning: "EARLY MORNING",
+	earlyMorning: "DAYBREAK",
 	morning:      "MORNING",
-	afternoon:    "AFTERNOON",
+	afternoon:    "MIDDAY",
 	evening:      "EVENING",
 	night:        "NIGHT",
 	lateNight:    "LATE NIGHT",
@@ -104,10 +104,19 @@ func vibeLabel(wmoCode int, s season, slot timeSlot) string {
 		}
 		return seasonName + " " + slotName
 	case "rain":
+		if slot == lateNight || slot == night {
+			return slotName + " SPIN"
+		}
 		return "RAINY " + slotName
 	case "snow":
+		if slot == lateNight || slot == night {
+			return slotName + " SPIN"
+		}
 		return "SNOWY " + slotName
 	case "fog":
+		if slot == lateNight || slot == night {
+			return slotName + " SPIN"
+		}
 		return "FOGGY " + slotName
 	case "storm":
 		return "STORM PICK"
@@ -127,16 +136,36 @@ func conditionBucket(wmoCode int) string {
 		return "clear"
 	case wmoCode == 2 || wmoCode == 3:
 		return "cloudy"
+	case wmoCode >= 4 && wmoCode <= 12:
+		return "fog"
+	case wmoCode >= 13 && wmoCode <= 19:
+		return "rain"
+	case wmoCode >= 20 && wmoCode <= 29:
+		return "rain"
+	case wmoCode >= 30 && wmoCode <= 35:
+		return "storm"
+	case wmoCode >= 36 && wmoCode <= 39:
+		return "snow"
+	case wmoCode >= 40 && wmoCode <= 44:
+		return "fog"
 	case wmoCode == 45 || wmoCode == 48:
 		return "fog"
 	case wmoCode >= 51 && wmoCode <= 67:
 		return "rain"
+	case wmoCode >= 68 && wmoCode <= 70:
+		return "rain"
 	case wmoCode >= 71 && wmoCode <= 77:
+		return "snow"
+	case wmoCode >= 78 && wmoCode <= 79:
 		return "snow"
 	case wmoCode >= 80 && wmoCode <= 82:
 		return "rain"
+	case wmoCode >= 83 && wmoCode <= 84:
+		return "rain"
 	case wmoCode >= 85 && wmoCode <= 86:
 		return "snow"
+	case wmoCode >= 87 && wmoCode <= 94:
+		return "storm"
 	case wmoCode >= 95:
 		return "storm"
 	default:
