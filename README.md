@@ -131,7 +131,7 @@ ical_urls:
 # countdown: named dates to count down (or back) to
 countdowns:
   - label: VACATION
-    date: "2025-07-04T00:00:00Z"
+    date: "2027-07-04T00:00:00Z"
 
 # discogs: your collection username and API token
 # discogs.com → Settings → Developers → Generate token

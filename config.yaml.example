@@ -8,6 +8,6 @@ ical_urls:
   - https://calendar.google.com/calendar/ical/second%40gmail.com/private-xyz789/basic.ics
 countdowns:
   - label: VACATION
-    date: "2025-07-04T00:00:00Z"
+    date: "2027-07-04T00:00:00Z"
   - label: CONCERT
-    date: "2025-08-15T20:00:00Z"
+    date: "2027-08-15T20:00:00Z"
