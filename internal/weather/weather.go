@@ -114,7 +114,7 @@ func colorForDesc(desc string) int {
 		return 69
 	case strings.Contains(d, "RAIN") || strings.Contains(d, "DRIZZLE") || strings.Contains(d, "SHOWER"):
 		return 67
-	case strings.Contains(d, "FOG") || strings.Contains(d, "MIST") || strings.Contains(d, "HAZE"):
+	case strings.Contains(d, "FOG"):
 		return 69
 	case strings.Contains(d, "CLOUD") || strings.Contains(d, "OVERCAST"):
 		return 69
