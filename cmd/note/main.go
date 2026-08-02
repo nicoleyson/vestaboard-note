@@ -24,6 +24,7 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/satellites"
 	"github.com/nicoleyson/vestaboard-note/internal/season"
 	"github.com/nicoleyson/vestaboard-note/internal/sunrise"
+	"github.com/nicoleyson/vestaboard-note/internal/sunscene"
 	"github.com/nicoleyson/vestaboard-note/internal/uv"
 	"github.com/nicoleyson/vestaboard-note/internal/vestaboard"
 	"github.com/nicoleyson/vestaboard-note/internal/weather"
@@ -32,7 +33,7 @@ import (
 var subcommands = []string{
 	"weather", "clock", "calendar", "moon", "air",
 	"flights", "onthisday", "countdown", "discogs", "pattern",
-	"sunrise", "pollen", "uv", "rain", "season", "holiday", "satellites", "tearoff",
+	"sunrise", "sunscene", "pollen", "uv", "rain", "season", "holiday", "satellites", "tearoff",
 	"status", "completion",
 }
 
@@ -103,6 +104,9 @@ func runStatus(cfg config) {
 		lines, err = sunrise.Fetch(cfg.Lat, cfg.Lon)
 		printLines("sunrise", lines, err)
 
+		lines, err = sunscene.Fetch(cfg.Lat, cfg.Lon)
+		printLines("sunscene", lines, err)
+
 		lines, _, err = pollen.Fetch(cfg.Lat, cfg.Lon)
 		printLines("pollen", lines, err)
 
@@ -121,6 +125,7 @@ func runStatus(cfg config) {
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "air")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "flights")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "sunrise")
+		fmt.Printf("  %-12s skipped (no lat/lon)\n", "sunscene")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "pollen")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "uv")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "rain")
@@ -147,7 +152,7 @@ func runStatus(cfg config) {
 const bashCompletion = `_note_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local cmds="weather clock calendar moon air flights onthisday countdown discogs pattern sunrise pollen uv rain season holiday satellites tearoff status completion"
+    local cmds="weather clock calendar moon air flights onthisday countdown discogs pattern sunrise sunscene pollen uv rain season holiday satellites tearoff status completion"
     local patterns="random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow"
     if [[ "${prev}" == "pattern" ]]; then
         COMPREPLY=($(compgen -W "${patterns}" -- "${cur}"))
@@ -174,6 +179,7 @@ _note() {
         'discogs:record matched to weather and time'
         'pattern:random art and color patterns'
         'sunrise:next sunrise or sunset time'
+        'sunscene:visual sunrise or sunset color art'
         'pollen:pollen levels by type'
         'uv:uv index with color scale'
         'rain:precipitation probability and intensity'
@@ -219,6 +225,7 @@ complete -c note -n __fish_use_subcommand -a countdown  -d 'Days until configure
 complete -c note -n __fish_use_subcommand -a discogs    -d 'Record matched to weather and time'
 complete -c note -n __fish_use_subcommand -a pattern    -d 'Random art and color patterns'
 complete -c note -n __fish_use_subcommand -a sunrise    -d 'Next sunrise or sunset time'
+complete -c note -n __fish_use_subcommand -a sunscene   -d 'Visual sunrise or sunset color art'
 complete -c note -n __fish_use_subcommand -a pollen     -d 'Pollen levels by type'
 complete -c note -n __fish_use_subcommand -a uv         -d 'UV index with color scale'
 complete -c note -n __fish_use_subcommand -a rain       -d 'Precipitation probability and intensity'
@@ -343,6 +350,12 @@ func main() {
 			os.Exit(1)
 		}
 		lines, err = sunrise.Fetch(cfg.Lat, cfg.Lon)
+	case "sunscene":
+		if cfg.Lat == 0 || cfg.Lon == 0 {
+			fmt.Fprintf(os.Stderr, "error: lat and lon required for sunscene\n")
+			os.Exit(1)
+		}
+		lines, err = sunscene.Fetch(cfg.Lat, cfg.Lon)
 	case "pollen":
 		if cfg.Lat == 0 || cfg.Lon == 0 {
 			fmt.Fprintf(os.Stderr, "error: lat and lon required for pollen\n")
