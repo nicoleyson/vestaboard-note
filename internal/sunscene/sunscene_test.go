@@ -1,9 +1,14 @@
 package sunscene
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/nicoleyson/vestaboard-note/internal/sunapi"
 )
 
 // tileCount counts rendered tiles: each {N} is one tile, each plain rune is one tile.
@@ -124,5 +129,58 @@ func TestRenderNight_moonDiscPresent(t *testing.T) {
 	moonRowIdx := sunRow(0.5) // same logic, = 0
 	if !strings.Contains(lines[moonRowIdx], "{69}") { // white
 		t.Errorf("renderNight(0.5): expected white tile in moon row %d, got %q", moonRowIdx, lines[moonRowIdx])
+	}
+}
+
+func makeSunServer(t *testing.T, rise, set string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status": "OK",
+			"results": map[string]string{
+				"sunrise": rise,
+				"sunset":  set,
+			},
+		})
+	}))
+}
+
+func patchURL(srv *httptest.Server) func() {
+	orig := sunapi.APIURL
+	sunapi.APIURL = srv.URL
+	return func() { sunapi.APIURL = orig }
+}
+
+func TestFetch_duringDay_returnsDayScene(t *testing.T) {
+	rise := "2026-08-02T06:00:00+00:00"
+	set := "2026-08-02T22:00:00+00:00"
+	srv := makeSunServer(t, rise, set)
+	defer srv.Close()
+	restore := patchURL(srv)
+	defer restore()
+
+	lines, err := Fetch(37.7, -122.4)
+	if err != nil {
+		t.Fatalf("Fetch error: %v", err)
+	}
+	for i, line := range lines {
+		if n := tileCount(line); n != cols {
+			t.Errorf("row %d: %d tiles, want %d", i, n, cols)
+		}
+	}
+}
+
+func TestFetch_apiError_returnsError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+	restore := patchURL(srv)
+	defer restore()
+
+	_, err := Fetch(37.7, -122.4)
+	if err == nil {
+		t.Error("expected error when sunapi returns HTTP 500")
 	}
 }

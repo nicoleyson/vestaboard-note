@@ -1,6 +1,10 @@
 package discogs
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -98,6 +102,179 @@ func TestWeightedPick_highScoreDominates(t *testing.T) {
 	}
 	if commonCount < 80 {
 		t.Errorf("high-score record should dominate: got %d/100", commonCount)
+	}
+}
+
+func makeSinglePageCollection(artists []string) collectionPage {
+	var pg collectionPage
+	pg.Pagination.Pages = 1
+	for _, a := range artists {
+		pg.Releases = append(pg.Releases, struct {
+			BasicInformation struct {
+				Title   string `json:"title"`
+				Artists []struct {
+					Name string `json:"name"`
+				} `json:"artists"`
+				Styles []string `json:"styles"`
+				Genres []string `json:"genres"`
+			} `json:"basic_information"`
+		}{BasicInformation: struct {
+			Title   string `json:"title"`
+			Artists []struct {
+				Name string `json:"name"`
+			} `json:"artists"`
+			Styles []string `json:"styles"`
+			Genres []string `json:"genres"`
+		}{Title: "Album", Artists: []struct {
+			Name string `json:"name"`
+		}{{Name: a}}, Styles: []string{"Rock"}}})
+	}
+	return pg
+}
+
+func TestFetchCollection_singlePage(t *testing.T) {
+	pg := makeSinglePageCollection([]string{"The Beatles", "Miles Davis"})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(pg)
+	}))
+	defer srv.Close()
+
+	old := apiBase
+	apiBase = srv.URL
+	defer func() { apiBase = old }()
+
+	records, err := fetchCollection("user", "token")
+	if err != nil {
+		t.Fatalf("fetchCollection error: %v", err)
+	}
+	if len(records) != 2 {
+		t.Errorf("fetchCollection: got %d records, want 2", len(records))
+	}
+}
+
+func TestFetchCollection_httpError_returnsError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "forbidden", http.StatusForbidden)
+	}))
+	defer srv.Close()
+
+	old := apiBase
+	apiBase = srv.URL
+	defer func() { apiBase = old }()
+
+	_, err := fetchCollection("user", "token")
+	if err == nil {
+		t.Error("expected error for HTTP 403")
+	}
+}
+
+func TestFetchWMO_success(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"current": map[string]interface{}{
+				"weather_code": 61,
+			},
+		})
+	}))
+	defer srv.Close()
+
+	old := wmoURL
+	wmoURL = srv.URL
+	defer func() { wmoURL = old }()
+
+	code, err := fetchWMO(37.7, -122.4)
+	if err != nil {
+		t.Fatalf("fetchWMO error: %v", err)
+	}
+	if code != 61 {
+		t.Errorf("fetchWMO: got %d, want 61", code)
+	}
+}
+
+func TestFetchWMO_httpError_returnsError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "service unavailable", http.StatusServiceUnavailable)
+	}))
+	defer srv.Close()
+
+	old := wmoURL
+	wmoURL = srv.URL
+	defer func() { wmoURL = old }()
+
+	_, err := fetchWMO(37.7, -122.4)
+	if err == nil {
+		t.Error("expected error for HTTP 503")
+	}
+}
+
+func TestFetch_rowLengths(t *testing.T) {
+	pg := makeSinglePageCollection([]string{"The Beatles"})
+	collSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(pg)
+	}))
+	defer collSrv.Close()
+
+	wmoSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"current": map[string]interface{}{"weather_code": 0},
+		})
+	}))
+	defer wmoSrv.Close()
+
+	oldAPI := apiBase
+	apiBase = collSrv.URL
+	defer func() { apiBase = oldAPI }()
+
+	oldWMO := wmoURL
+	wmoURL = wmoSrv.URL
+	defer func() { wmoURL = oldWMO }()
+
+	lines, err := Fetch("user", "token", 37.7, -122.4)
+	if err != nil {
+		t.Fatalf("Fetch error: %v", err)
+	}
+	for i, line := range lines {
+		if len([]rune(line)) != 15 {
+			t.Errorf("Fetch row %d len = %d, want 15: %q", i, len([]rune(line)), line)
+		}
+	}
+}
+
+func TestFetch_emptyCollection_returnsError(t *testing.T) {
+	var empty collectionPage
+	empty.Pagination.Pages = 1
+	collSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(empty)
+	}))
+	defer collSrv.Close()
+
+	wmoSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"current": map[string]interface{}{"weather_code": 0},
+		})
+	}))
+	defer wmoSrv.Close()
+
+	oldAPI := apiBase
+	apiBase = collSrv.URL
+	defer func() { apiBase = oldAPI }()
+
+	oldWMO := wmoURL
+	wmoURL = wmoSrv.URL
+	defer func() { wmoURL = oldWMO }()
+
+	_, err := Fetch("user", "token", 37.7, -122.4)
+	if err == nil {
+		t.Error("expected error for empty collection")
+	}
+	if !strings.Contains(err.Error(), "empty") {
+		t.Errorf("error should mention empty collection: %v", err)
 	}
 }
 

@@ -1,6 +1,9 @@
 package satellites
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -99,6 +102,130 @@ func TestColorForCategory(t *testing.T) {
 		got := colorForCategory(tc.cat)
 		if got != tc.want {
 			t.Errorf("colorForCategory(%q) = %d, want %d", tc.cat, got, tc.want)
+		}
+	}
+}
+
+func TestFetch_returnsISS(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(overhead{
+			Count: 1,
+			Satellites: []satellite{
+				{Name: "ISS (ZARYA)", Category: "STATIONS", ElevationDeg: 45, Direction: "NW"},
+			},
+		})
+	}))
+	defer srv.Close()
+
+	old := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = old }()
+
+	lines, trivial, err := Fetch(37.7, -122.4)
+	if err != nil {
+		t.Fatalf("Fetch error: %v", err)
+	}
+	if trivial {
+		t.Error("expected non-trivial when ISS is overhead")
+	}
+	if lines[1] != "      ISS      " {
+		t.Errorf("row1 want centered ISS, got %q", lines[1])
+	}
+}
+
+func TestFetch_noInterestingSatellites_returnsTrivial(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(overhead{
+			Count: 2,
+			Satellites: []satellite{
+				{Name: "STARLINK-1234", Category: "STARLINK", ElevationDeg: 80},
+				{Name: "DEBRIS-X", Category: "DEBRIS", ElevationDeg: 60},
+			},
+		})
+	}))
+	defer srv.Close()
+
+	old := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = old }()
+
+	lines, trivial, err := Fetch(37.7, -122.4)
+	if err != nil {
+		t.Fatalf("Fetch error: %v", err)
+	}
+	if !trivial {
+		t.Error("expected trivial when only Starlink/Debris present")
+	}
+	_ = lines
+}
+
+func TestFetch_httpError_returnsTrivial(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+	defer srv.Close()
+
+	old := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = old }()
+
+	_, trivial, err := Fetch(37.7, -122.4)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !trivial {
+		t.Error("expected trivial on HTTP error (satellites treats errors as trivial)")
+	}
+}
+
+func TestFetch_emptyResponse_returnsTrivial(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(overhead{Count: 0, Satellites: nil})
+	}))
+	defer srv.Close()
+
+	old := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = old }()
+
+	_, trivial, err := Fetch(37.7, -122.4)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !trivial {
+		t.Error("expected trivial for empty satellite list")
+	}
+}
+
+func TestFetch_rowLengths(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(overhead{
+			Count: 1,
+			Satellites: []satellite{
+				{Name: "GPS IIR-M (1)", Category: "GPS", ElevationDeg: 72, Direction: "SE"},
+			},
+		})
+	}))
+	defer srv.Close()
+
+	old := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = old }()
+
+	lines, trivial, err := Fetch(37.7, -122.4)
+	if err != nil {
+		t.Fatalf("Fetch error: %v", err)
+	}
+	if trivial {
+		t.Error("expected non-trivial for GPS satellite")
+	}
+	for i := 1; i < 3; i++ {
+		if len([]rune(lines[i])) != 15 {
+			t.Errorf("row %d len = %d, want 15: %q", i, len([]rune(lines[i])), lines[i])
 		}
 	}
 }

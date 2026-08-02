@@ -116,3 +116,20 @@ func TestFetch_httpError(t *testing.T) {
 		t.Error("Fetch: expected error for HTTP 503")
 	}
 }
+
+func TestFetch_jsonDecodeError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{invalid json`))
+	}))
+	defer srv.Close()
+
+	old := apiURL
+	apiURL = srv.URL
+	defer func() { apiURL = old }()
+
+	_, _, err := Fetch(37.7, -122.4)
+	if err == nil {
+		t.Error("Fetch: expected error for malformed JSON response")
+	}
+}

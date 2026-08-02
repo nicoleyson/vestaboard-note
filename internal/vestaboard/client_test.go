@@ -1,7 +1,10 @@
 package vestaboard
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestCharCode(t *testing.T) {
@@ -83,5 +86,75 @@ func TestEncodeLinesTruncatesAt15(t *testing.T) {
 	grid := encodeLines(lines)
 	if grid[0][14] != charCode('O') {
 		t.Errorf("encodeLines: col 14 = %d, want %d (O)", grid[0][14], charCode('O'))
+	}
+}
+
+func TestSendLines_success(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	old := baseURL
+	baseURL = srv.URL
+	defer func() { baseURL = old }()
+
+	c := New("test-token")
+	c.lastSent = time.Time{}
+	lines := [3]string{"HELLO", "WORLD", "12345"}
+	if err := c.SendLines(lines); err != nil {
+		t.Fatalf("SendLines error: %v", err)
+	}
+}
+
+func TestSendLines_rateLimitError(t *testing.T) {
+	c := New("test-token")
+	c.lastSent = time.Now()
+
+	lines := [3]string{"A", "B", "C"}
+	err := c.SendLines(lines)
+	if err == nil {
+		t.Error("expected rate limit error when called immediately after lastSent")
+	}
+}
+
+func TestSendLines_non2xxReturnsError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+	}))
+	defer srv.Close()
+
+	old := baseURL
+	baseURL = srv.URL
+	defer func() { baseURL = old }()
+
+	c := New("bad-token")
+	c.lastSent = time.Time{}
+	lines := [3]string{"A", "B", "C"}
+	err := c.SendLines(lines)
+	if err == nil {
+		t.Error("expected error for HTTP 401")
+	}
+}
+
+func TestSendLines_setsLastSentOnSuccess(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	old := baseURL
+	baseURL = srv.URL
+	defer func() { baseURL = old }()
+
+	c := New("test-token")
+	c.lastSent = time.Time{}
+	before := time.Now()
+	lines := [3]string{"A", "B", "C"}
+	if err := c.SendLines(lines); err != nil {
+		t.Fatalf("SendLines error: %v", err)
+	}
+	if c.lastSent.Before(before) {
+		t.Error("lastSent should be updated after successful send")
 	}
 }

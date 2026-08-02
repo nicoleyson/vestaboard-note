@@ -11,8 +11,9 @@ import (
 	"time"
 )
 
+var baseURL = "https://cloud.vestaboard.com"
+
 const (
-	baseURL     = "https://cloud.vestaboard.com"
 	minInterval = 15 * time.Second
 	rows        = 3
 	cols        = 15

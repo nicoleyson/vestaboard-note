@@ -24,6 +24,10 @@ func fetchURL(url string, client *http.Client) ([]event, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("calendar fetch %s returned HTTP %d", url, resp.StatusCode)
+	}
+
 	cal, err := ics.ParseCalendar(resp.Body)
 	if err != nil {
 		return nil, err

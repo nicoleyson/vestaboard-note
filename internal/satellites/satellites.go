@@ -11,6 +11,9 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/layout"
 )
 
+// apiURL is the overhead satellite API; overridden in tests.
+var apiURL = "https://api.satlas.app/api/overhead"
+
 // interesting categories to surface — exclude DEBRIS and STARLINK (hundreds, noisy)
 var interestingCategories = map[string]bool{
 	"OTHER":    true,
@@ -39,8 +42,8 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 	defer cancel()
 
 	url := fmt.Sprintf(
-		"https://api.satlas.app/api/overhead?latitude=%g&longitude=%g&min_elevation=10&limit=50",
-		lat, lon,
+		"%s?latitude=%g&longitude=%g&min_elevation=10&limit=50",
+		apiURL, lat, lon,
 	)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)

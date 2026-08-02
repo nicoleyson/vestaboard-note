@@ -179,3 +179,39 @@ func TestFetch_summaryTruncatedTo15(t *testing.T) {
 		t.Errorf("row3 tile count = %d, want 15 (truncated): %q", countTiles(lines[2]), lines[2])
 	}
 }
+
+func TestFetch_singleURLNon200_returnsNoEvents(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "not found", http.StatusNotFound)
+	}))
+	defer srv.Close()
+
+	lines, err := Fetch([]string{srv.URL})
+	if err == nil {
+		t.Error("expected error when the only URL returns non-200")
+	}
+	_ = lines
+}
+
+func TestFetch_oneURLFailsOneSucceeds_showsEvent(t *testing.T) {
+	future := time.Now().Add(1 * time.Hour).UTC().Format(time.RFC3339)
+	ical := makeICal([]struct{ uid, summary, dtstart string }{
+		{"uid1", "TEAM MEETING", future},
+	})
+	goodSrv := serveICal(t, ical)
+	defer goodSrv.Close()
+
+	badSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "gone", http.StatusGone)
+	}))
+	defer badSrv.Close()
+
+	lines, err := Fetch([]string{badSrv.URL, goodSrv.URL})
+	if err != nil {
+		t.Fatalf("unexpected error when one URL succeeds: %v", err)
+	}
+	combined := strings.Join(lines[:], " ")
+	if !strings.Contains(combined, "TEAM MEETING") {
+		t.Errorf("expected TEAM MEETING in output, got: %v", lines)
+	}
+}
