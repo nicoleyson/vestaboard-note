@@ -1,4 +1,4 @@
-package sunrise
+package suntime
 
 import (
 	"encoding/json"

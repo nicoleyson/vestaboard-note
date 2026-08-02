@@ -17,13 +17,13 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/countdown"
 	"github.com/nicoleyson/vestaboard-note/internal/discogs"
 	"github.com/nicoleyson/vestaboard-note/internal/flights"
-	"github.com/nicoleyson/vestaboard-note/internal/moon"
+	"github.com/nicoleyson/vestaboard-note/internal/moonphase"
 	"github.com/nicoleyson/vestaboard-note/internal/onthisday"
 	"github.com/nicoleyson/vestaboard-note/internal/pollen"
 	"github.com/nicoleyson/vestaboard-note/internal/rain"
 	"github.com/nicoleyson/vestaboard-note/internal/satellites"
 	"github.com/nicoleyson/vestaboard-note/internal/season"
-	"github.com/nicoleyson/vestaboard-note/internal/sunrise"
+	"github.com/nicoleyson/vestaboard-note/internal/suntime"
 	"github.com/nicoleyson/vestaboard-note/internal/sunscene"
 	"github.com/nicoleyson/vestaboard-note/internal/uv"
 	"github.com/nicoleyson/vestaboard-note/internal/vestaboard"
@@ -31,9 +31,9 @@ import (
 )
 
 var subcommands = []string{
-	"weather", "clock", "calendar", "moon", "air",
+	"weather", "clock", "calendar", "moonphase", "air",
 	"flights", "onthisday", "countdown", "discogs", "pattern",
-	"sunrise", "sunscene", "pollen", "uv", "rain", "season", "holiday", "satellites", "tearoff",
+	"suntime", "sunscene", "pollen", "uv", "rain", "season", "holiday", "satellites", "tearoff",
 	"status", "completion",
 }
 
@@ -91,7 +91,7 @@ func runStatus(cfg config) {
 		fmt.Printf("  %-12s skipped (no ical_urls)\n", "calendar")
 	}
 
-	printLines("moon", moon.Format(now), nil)
+	printLines("moonphase", moonphase.Format(now), nil)
 	printLines("season", season.Format(now), nil)
 
 	if cfg.Lat != 0 || cfg.Lon != 0 {
@@ -101,8 +101,8 @@ func runStatus(cfg config) {
 		lines, err = flights.Fetch(cfg.Lat, cfg.Lon)
 		printLines("flights", lines, err)
 
-		lines, err = sunrise.Fetch(cfg.Lat, cfg.Lon)
-		printLines("sunrise", lines, err)
+		lines, err = suntime.Fetch(cfg.Lat, cfg.Lon)
+		printLines("suntime", lines, err)
 
 		lines, err = sunscene.Fetch(cfg.Lat, cfg.Lon)
 		printLines("sunscene", lines, err)
@@ -124,7 +124,7 @@ func runStatus(cfg config) {
 	} else {
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "air")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "flights")
-		fmt.Printf("  %-12s skipped (no lat/lon)\n", "sunrise")
+		fmt.Printf("  %-12s skipped (no lat/lon)\n", "suntime")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "sunscene")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "pollen")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "uv")
@@ -152,7 +152,7 @@ func runStatus(cfg config) {
 const bashCompletion = `_note_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local cmds="weather clock calendar moon air flights onthisday countdown discogs pattern sunrise sunscene pollen uv rain season holiday satellites tearoff status completion"
+    local cmds="weather clock calendar moonphase air flights onthisday countdown discogs pattern suntime sunscene pollen uv rain season holiday satellites tearoff status completion"
     local patterns="current random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow"
     if [[ "${prev}" == "pattern" ]]; then
         COMPREPLY=($(compgen -W "${patterns}" -- "${cur}"))
@@ -171,14 +171,14 @@ _note() {
         'weather:current conditions'
         'clock:date and time'
         'calendar:next calendar event'
-        'moon:lunar phase'
+        'moonphase:lunar phase'
         'air:air quality index'
         'flights:aircraft overhead'
         'onthisday:historical event'
         'countdown:days until configured event'
         'discogs:record matched to weather and time'
         'pattern:random art and color patterns'
-        'sunrise:next sunrise or sunset time'
+        'suntime:next sunrise or sunset time'
         'sunscene:visual sunrise or sunset color art'
         'pollen:pollen levels by type'
         'uv:uv index with color scale'
@@ -218,15 +218,15 @@ const fishCompletion = `complete -c note -f
 complete -c note -n __fish_use_subcommand -a weather    -d 'Current conditions'
 complete -c note -n __fish_use_subcommand -a clock      -d 'Date and time'
 complete -c note -n __fish_use_subcommand -a calendar   -d 'Next calendar event'
-complete -c note -n __fish_use_subcommand -a moon       -d 'Lunar phase'
+complete -c note -n __fish_use_subcommand -a moonphase   -d 'Lunar phase'
 complete -c note -n __fish_use_subcommand -a air        -d 'Air quality index'
 complete -c note -n __fish_use_subcommand -a flights    -d 'Aircraft overhead'
 complete -c note -n __fish_use_subcommand -a onthisday  -d 'Historical event'
 complete -c note -n __fish_use_subcommand -a countdown  -d 'Days until configured event'
 complete -c note -n __fish_use_subcommand -a discogs    -d 'Record matched to weather and time'
 complete -c note -n __fish_use_subcommand -a pattern    -d 'Random art and color patterns'
-complete -c note -n __fish_use_subcommand -a sunrise    -d 'Next sunrise or sunset time'
-complete -c note -n __fish_use_subcommand -a sunscene   -d 'Visual sunrise or sunset color art'
+complete -c note -n __fish_use_subcommand -a suntime     -d 'Next sunrise or sunset time'
+complete -c note -n __fish_use_subcommand -a sunscene   -d 'Next sunrise or sunset color art'
 complete -c note -n __fish_use_subcommand -a pollen     -d 'Pollen levels by type'
 complete -c note -n __fish_use_subcommand -a uv         -d 'UV index with color scale'
 complete -c note -n __fish_use_subcommand -a rain       -d 'Precipitation probability and intensity'
@@ -307,8 +307,8 @@ func main() {
 			os.Exit(1)
 		}
 		lines, err = calendar.Fetch(cfg.ICalURLs)
-	case "moon":
-		lines = moon.Format(time.Now())
+	case "moonphase":
+		lines = moonphase.Format(time.Now())
 	case "air":
 		if cfg.Lat == 0 || cfg.Lon == 0 {
 			fmt.Fprintf(os.Stderr, "error: lat and lon required for air\n")
@@ -352,12 +352,12 @@ func main() {
 		default:
 			lines, err = pattern.Generate(name)
 		}
-	case "sunrise":
+	case "suntime":
 		if cfg.Lat == 0 || cfg.Lon == 0 {
-			fmt.Fprintf(os.Stderr, "error: lat and lon required for sunrise\n")
+			fmt.Fprintf(os.Stderr, "error: lat and lon required for suntime\n")
 			os.Exit(1)
 		}
-		lines, err = sunrise.Fetch(cfg.Lat, cfg.Lon)
+		lines, err = suntime.Fetch(cfg.Lat, cfg.Lon)
 	case "sunscene":
 		if cfg.Lat == 0 || cfg.Lon == 0 {
 			fmt.Fprintf(os.Stderr, "error: lat and lon required for sunscene\n")

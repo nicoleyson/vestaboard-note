@@ -47,14 +47,14 @@ Reload your shell after adding.
 | `weather` | Current conditions — temp, sky, color row | Real observed data from nearest airport station, updated every ~30–60 min | `lat`, `lon` |
 | `clock` | Date and time | Point in time | — |
 | `calendar` | Next upcoming event | Point in time | `ical_urls` |
-| `moon` | Lunar phase with illumination color split | Point in time | — |
+| `moonphase` | Lunar phase with illumination color split | Point in time | — |
 | `air` | Air quality index with color row | Point in time (hourly model) | `lat`, `lon` |
 | `flights` | Aircraft currently overhead | Point in time | `lat`, `lon` |
 | `onthisday` | A historical event from today's date | Today's date | — |
 | `countdown` | Days until a configured event | Point in time | `countdowns` |
 | `discogs` | A record from your collection matched to weather + time of day | Point in time | `discogs_username`, `discogs_token`, `lat`, `lon` |
 | `pattern` | Color art — stripes, checker, hearts, confetti, and more. Use `pattern current` for seasonal/holiday-aware palette | — | — |
-| `sunrise` | Next sunrise or sunset time with color row | Calculated astronomical time | `lat`, `lon` |
+| `suntime` | Next sunrise or sunset time with color row | Calculated astronomical time | `lat`, `lon` |
 | `sunscene` | Visual color art scene — sunrise (cool sky, warm burst) or sunset (warm sky, deep afterglow) | Calculated astronomical time | `lat`, `lon` |
 | `pollen` | Pollen level and dominant type (grass/tree/weed) with color row | Point in time (hourly model) | `lat`, `lon` |
 | `uv` | UV index with category color row (green→yellow→orange→red→violet) | Point in time (hourly model) | `lat`, `lon` |
@@ -92,7 +92,7 @@ VESTABOARD_DIR=/Users/yourname/repos/nicoleyson/vestaboard-note
 0 * * * * cd $VESTABOARD_DIR && ./note calendar
 
 # Sunrise/sunset during waking hours (offset to avoid :00 collision)
-2 8-22 * * * cd $VESTABOARD_DIR && ./note sunrise
+2 8-22 * * * cd $VESTABOARD_DIR && ./note suntime
 
 # UV index during peak hours (offset to avoid collision)
 4 10-15 * * * cd $VESTABOARD_DIR && ./note uv
@@ -108,7 +108,7 @@ VESTABOARD_DIR=/Users/yourname/repos/nicoleyson/vestaboard-note
 
 # ── Evening ──────────────────────────────────────────────────────
 # Moon phase at 9pm — best appreciated at night
-0 21 * * * cd $VESTABOARD_DIR && ./note moon
+0 21 * * * cd $VESTABOARD_DIR && ./note moonphase
 
 # ── Screensaver ──────────────────────────────────────────────────
 # Tear-off calendar at midnight — stays up until weather reclaims the board at 8:30am

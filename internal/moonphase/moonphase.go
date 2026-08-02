@@ -1,4 +1,4 @@
-package moon
+package moonphase
 
 import (
 	"fmt"
