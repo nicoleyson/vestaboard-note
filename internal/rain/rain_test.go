@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -88,12 +89,15 @@ func TestFetch_nonRaining(t *testing.T) {
 	apiURL = srv.URL
 	defer func() { apiURL = old }()
 
-	_, trivial, err := Fetch(37.7, -122.4)
+	lines, trivial, err := Fetch(37.7, -122.4)
 	if err != nil {
 		t.Fatalf("Fetch error: %v", err)
 	}
 	if !trivial {
 		t.Error("Fetch: expected trivial for 0mm rain")
+	}
+	if !strings.Contains(lines[1], "DRY") {
+		t.Errorf("row1 should contain DRY when no rain, got %q", lines[1])
 	}
 }
 

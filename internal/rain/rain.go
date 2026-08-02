@@ -41,10 +41,17 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 	mm := data.Current.Precipitation
 	intensity, color := classify(mm)
 
+	var row2 string
+	if mm > 0 {
+		row2 = layout.Center(fmt.Sprintf("RAIN %.1fMM", mm), layout.Cols)
+	} else {
+		row2 = layout.Center("DRY", layout.Cols)
+	}
+
 	trivial := intensity == "NONE"
 	return [3]string{
 		layout.ColorRow(color),
-		layout.Center(fmt.Sprintf("RAIN %.1fMM", mm), layout.Cols),
+		row2,
 		layout.Center(intensity, layout.Cols),
 	}, trivial, nil
 }
