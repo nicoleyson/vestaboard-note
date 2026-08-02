@@ -1,7 +1,10 @@
 package onthisday
 
 import (
+	"encoding/json"
 	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -46,6 +49,73 @@ func TestEndsWithTilde(t *testing.T) {
 	}
 }
 
+func TestFetch_success(t *testing.T) {
+	body, _ := json.Marshal(map[string]interface{}{
+		"events": []map[string]interface{}{
+			{"year": 1969, "text": "Apollo 11 lands on the Moon"},
+		},
+	})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(body)
+	}))
+	defer srv.Close()
+
+	old := apiURL
+	// apiURL format has %d/%d, replace the whole base so fmt.Sprintf still works
+	apiURL = srv.URL + "/%d/%d"
+	defer func() { apiURL = old }()
+
+	lines, err := Fetch(time.Now())
+	if err != nil {
+		t.Fatalf("Fetch error: %v", err)
+	}
+	for i, l := range lines {
+		if len([]rune(l)) != 15 {
+			t.Errorf("row %d len = %d, want 15: %q", i, len([]rune(l)), l)
+		}
+	}
+	if !strings.Contains(lines[0], "ON THIS DAY") {
+		t.Errorf("row 0 should contain ON THIS DAY, got %q", lines[0])
+	}
+}
+
+func TestFetch_emptyEvents(t *testing.T) {
+	body, _ := json.Marshal(map[string]interface{}{
+		"events": []map[string]interface{}{},
+	})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(body)
+	}))
+	defer srv.Close()
+
+	old := apiURL
+	apiURL = srv.URL + "/%d/%d"
+	defer func() { apiURL = old }()
+
+	_, err := Fetch(time.Now())
+	if err == nil {
+		t.Error("expected error for empty events response")
+	}
+}
+
+func TestFetch_httpError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "not found", http.StatusNotFound)
+	}))
+	defer srv.Close()
+
+	old := apiURL
+	apiURL = srv.URL + "/%d/%d"
+	defer func() { apiURL = old }()
+
+	_, err := Fetch(time.Now())
+	if err == nil {
+		t.Error("expected error for HTTP 404")
+	}
+}
+
 func TestFetch_live(t *testing.T) {
 	resp, err := http.Get("https://en.wikipedia.org")
 	if err != nil || resp.StatusCode != 200 {
@@ -63,3 +133,4 @@ func TestFetch_live(t *testing.T) {
 		}
 	}
 }
+

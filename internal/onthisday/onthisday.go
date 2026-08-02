@@ -11,7 +11,7 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/layout"
 )
 
-const apiURL = "https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/%d/%d"
+var apiURL = "https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/%d/%d"
 
 type wikiEvent struct {
 	Year int    `json:"year"`

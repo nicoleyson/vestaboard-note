@@ -9,7 +9,7 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/layout"
 )
 
-const apiURL = "https://air-quality-api.open-meteo.com/v1/air-quality"
+var apiURL = "https://air-quality-api.open-meteo.com/v1/air-quality"
 
 type apiResponse struct {
 	Current struct {
