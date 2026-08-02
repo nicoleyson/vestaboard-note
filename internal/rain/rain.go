@@ -9,18 +9,17 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/layout"
 )
 
-const apiURL = "https://api.open-meteo.com/v1/forecast"
+var apiURL = "https://api.open-meteo.com/v1/forecast"
 
 type apiResponse struct {
 	Current struct {
-		Precipitation        float64 `json:"precipitation"`
-		PrecipitationProb    int     `json:"precipitation_probability"`
+		Precipitation float64 `json:"precipitation"`
 	} `json:"current"`
 }
 
 func Fetch(lat, lon float64) ([3]string, bool, error) {
 	url := fmt.Sprintf(
-		"%s?latitude=%f&longitude=%f&current=precipitation,precipitation_probability",
+		"%s?latitude=%f&longitude=%f&current=precipitation",
 		apiURL, lat, lon,
 	)
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -39,21 +38,21 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 		return [3]string{}, false, err
 	}
 
-	prob := data.Current.PrecipitationProb
 	mm := data.Current.Precipitation
-	intensity, color := classify(prob, mm)
+	intensity, color := classify(mm)
 
 	trivial := intensity == "NONE"
 	return [3]string{
 		layout.ColorRow(color),
-		layout.Center(fmt.Sprintf("RAIN  %d%%", prob), layout.Cols),
+		layout.Center(fmt.Sprintf("RAIN %.1fMM", mm), layout.Cols),
 		layout.Center(intensity, layout.Cols),
 	}, trivial, nil
 }
 
-// classify returns an intensity label and a Vestaboard color code.
-// Color: blue (67) when raining or high chance, green (66) when low chance, yellow (65) when dry.
-func classify(prob int, mm float64) (label string, color int) {
+// classify returns an intensity label and a Vestaboard color code based on
+// precipitation in mm. open-meteo's precipitation_probability is hourly-only
+// and silently returns 0 in the current-weather context, so we use mm only.
+func classify(mm float64) (label string, color int) {
 	switch {
 	case mm >= 4.0:
 		return "HEAVY", 67
@@ -61,10 +60,6 @@ func classify(prob int, mm float64) (label string, color int) {
 		return "MODERATE", 67
 	case mm > 0:
 		return "LIGHT", 67
-	case prob >= 60:
-		return "LIKELY", 67
-	case prob >= 30:
-		return "POSSIBLE", 66
 	default:
 		return "NONE", 65
 	}
