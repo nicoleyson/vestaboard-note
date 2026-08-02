@@ -47,6 +47,9 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 			layout.Center("TRY LATER", layout.Cols),
 		}, true, nil
 	}
+	if resp.StatusCode != http.StatusOK {
+		return [3]string{}, true, fmt.Errorf("opensky HTTP %d", resp.StatusCode)
+	}
 
 	var data apiResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
@@ -108,8 +111,8 @@ func parseFirst(states [][]interface{}) *aircraft {
 		origin := ""
 		if o, ok := s[2].(string); ok {
 			origin = strings.ToUpper(strings.TrimSpace(o))
-			if len(origin) > 4 {
-				origin = origin[:4]
+			if runes := []rune(origin); len(runes) > 4 {
+				origin = string(runes[:4])
 			}
 		}
 		return &aircraft{callsign: callsign, altitude: altitude, origin: origin}

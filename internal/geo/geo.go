@@ -19,6 +19,14 @@ func IsFahrenheitCountry(lat, lon float64) bool {
 	if lat >= 17 && lat <= 18.5 && lon >= -68 && lon <= -64 {
 		return true
 	}
+	// Guam + Northern Mariana Islands
+	if lat >= 13 && lat <= 21 && lon >= 144 && lon <= 146 {
+		return true
+	}
+	// American Samoa
+	if lat >= -15 && lat <= -10 && lon >= -172 && lon <= -168 {
+		return true
+	}
 	// Liberia
 	if lat >= 4 && lat <= 8.5 && lon >= -11.5 && lon <= -7.5 {
 		return true
