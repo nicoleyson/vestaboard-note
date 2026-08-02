@@ -93,8 +93,8 @@ On macOS, `~` and `TZ=` are not reliably supported in crontab — use full absol
 # Rain check every morning — skips when chance is negligible
 10 8 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note rain --skip-trivial
 
-# Air quality every hour — skips when air is good
-6 * * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note air --skip-trivial
+# Air quality 3× a day (morning, midday, evening) — skips when air is good
+6 8,13,18 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note air --skip-trivial
 
 # Pollen every morning — skips when levels are low
 20 8 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note pollen --skip-trivial
