@@ -190,18 +190,3 @@ func stylesFor(wmoCode int, s season) []string {
 	}
 	return vibeStyles["clear"][s]
 }
-
-func stylesForConditionAny(wmoCode int) []string {
-	cond := conditionBucket(wmoCode)
-	seen := map[string]bool{}
-	var all []string
-	for _, seasonStyles := range vibeStyles[cond] {
-		for _, s := range seasonStyles {
-			if !seen[s] {
-				seen[s] = true
-				all = append(all, s)
-			}
-		}
-	}
-	return all
-}
