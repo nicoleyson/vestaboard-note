@@ -83,7 +83,7 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 	}
 	row3 := layout.Center(altStr, layout.Cols)
 	if ac.origin != "" && altStr != "" {
-		row3 = layout.Center(fmt.Sprintf("%s  %s", ac.origin, altStr), layout.Cols)
+		row3 = layout.Center(fmt.Sprintf("%s %s", ac.origin, altStr), layout.Cols)
 	}
 
 	return [3]string{row1, row2, row3}, false, nil
