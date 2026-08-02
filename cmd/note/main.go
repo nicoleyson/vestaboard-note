@@ -98,7 +98,7 @@ func runStatus(cfg config) {
 		lines, _, err = air.Fetch(cfg.Lat, cfg.Lon)
 		printLines("air", lines, err)
 
-		lines, err = flights.Fetch(cfg.Lat, cfg.Lon)
+		lines, _, err = flights.Fetch(cfg.Lat, cfg.Lon)
 		printLines("flights", lines, err)
 
 		lines, err = suntime.Fetch(cfg.Lat, cfg.Lon)
@@ -320,7 +320,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error: lat and lon required for flights\n")
 			os.Exit(1)
 		}
-		lines, err = flights.Fetch(cfg.Lat, cfg.Lon)
+		lines, trivial, err = flights.Fetch(cfg.Lat, cfg.Lon)
 	case "onthisday":
 		lines, err = onthisday.Fetch(time.Now())
 	case "countdown":

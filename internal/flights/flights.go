@@ -22,7 +22,7 @@ type aircraft struct {
 	origin   string
 }
 
-func Fetch(lat, lon float64) ([3]string, error) {
+func Fetch(lat, lon float64) ([3]string, bool, error) {
 	delta := 0.4
 	url := fmt.Sprintf("%s?lamin=%f&lomin=%f&lamax=%f&lomax=%f",
 		apiURL, lat-delta, lon-delta, lat+delta, lon+delta)
@@ -30,12 +30,12 @@ func Fetch(lat, lon float64) ([3]string, error) {
 	client := &http.Client{Timeout: 15 * time.Second}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return [3]string{}, err
+		return [3]string{}, true, err
 	}
 	req.Header.Set("User-Agent", "vestaboard-note/1.0 (https://github.com/nicoleyson/vestaboard-note)")
 	resp, err := client.Do(req)
 	if err != nil {
-		return [3]string{}, err
+		return [3]string{}, true, err
 	}
 	defer resp.Body.Close()
 
@@ -44,12 +44,12 @@ func Fetch(lat, lon float64) ([3]string, error) {
 			layout.Center("FLIGHTS", layout.Cols),
 			layout.Center("RATE LIMITED", layout.Cols),
 			layout.Center("TRY LATER", layout.Cols),
-		}, nil
+		}, true, nil
 	}
 
 	var data apiResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return [3]string{}, err
+		return [3]string{}, true, err
 	}
 
 	if len(data.States) == 0 {
@@ -57,7 +57,7 @@ func Fetch(lat, lon float64) ([3]string, error) {
 			layout.Center("FLIGHTS", layout.Cols),
 			layout.Center("CLEAR SKIES", layout.Cols),
 			layout.Center("NONE OVERHEAD", layout.Cols),
-		}, nil
+		}, true, nil
 	}
 
 	ac := parseFirst(data.States)
@@ -74,7 +74,7 @@ func Fetch(lat, lon float64) ([3]string, error) {
 		row3 = layout.Center(fmt.Sprintf("%s  %s", ac.origin, altStr), layout.Cols)
 	}
 
-	return [3]string{row1, row2, row3}, nil
+	return [3]string{row1, row2, row3}, false, nil
 }
 
 func parseFirst(states [][]interface{}) aircraft {
