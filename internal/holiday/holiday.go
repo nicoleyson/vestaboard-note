@@ -1,6 +1,7 @@
 package holiday
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -30,7 +31,9 @@ type nagerHoliday struct {
 
 func getJSON(url string, target interface{}) error {
 	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequest("GET", url, nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return err
 	}
