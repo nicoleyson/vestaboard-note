@@ -72,48 +72,51 @@ func sunRow(progress float64) int {
 	}
 }
 
-// skyPalette returns the sky colors above, at, and below the sun row
-// based on daylight progress. Colors shift from dawn reds through
-// golden-hour oranges to midday blue.
-func skyPalette(progress float64) (aboveSun, atSun, belowSun int) {
+func rowColor(r, sr int, progress float64) int {
 	switch {
-	case progress < 0.10:
-		return black, red, black
-	case progress < 0.20:
-		return violet, orange, red
-	case progress < 0.35:
-		return blue, orange, orange
-	case progress < 0.65:
-		return blue, blue, orange
-	case progress < 0.80:
-		return blue, orange, orange
-	case progress < 0.90:
-		return violet, orange, red
+	case progress < 0.10 || progress > 0.90:
+		if r == sr {
+			return red
+		}
+		return black
+	case progress < 0.20 || progress > 0.80:
+		switch r {
+		case 0:
+			return violet
+		case 1:
+			return orange
+		default:
+			return red
+		}
+	case progress < 0.35 || progress > 0.65:
+		switch r {
+		case 0:
+			return blue
+		case 1:
+			return orange
+		default:
+			return orange
+		}
 	default:
-		return black, red, black
+		switch r {
+		case 0:
+			return blue
+		case 1:
+			return blue
+		default:
+			return orange
+		}
 	}
 }
 
 func renderDay(progress float64) [3]string {
 	sr := sunRow(progress)
-	above, at, below := skyPalette(progress)
-
-	palette := [rows]int{}
-	for r := 0; r < rows; r++ {
-		switch {
-		case r < sr:
-			palette[r] = above
-		case r == sr:
-			palette[r] = at
-		default:
-			palette[r] = below
-		}
-	}
 
 	var g [rows][cols]int
 	for r := 0; r < rows; r++ {
-		for c := 0; c < cols; c++ {
-			g[r][c] = palette[r]
+		c := rowColor(r, sr, progress)
+		for col := 0; col < cols; col++ {
+			g[r][col] = c
 		}
 	}
 
