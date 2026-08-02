@@ -1,6 +1,7 @@
 package sunapi
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -21,7 +22,9 @@ func FetchTimes(lat, lon float64, date time.Time) (rise, set time.Time, err erro
 	dateStr := date.Local().Format("2006-01-02")
 	url := fmt.Sprintf("%s?lat=%f&lng=%f&date=%s&formatted=0", APIURL, lat, lon, dateStr)
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return time.Time{}, time.Time{}, err
 	}
