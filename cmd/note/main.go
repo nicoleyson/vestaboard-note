@@ -11,6 +11,7 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/air"
 	"github.com/nicoleyson/vestaboard-note/internal/holiday"
 	"github.com/nicoleyson/vestaboard-note/internal/pattern"
+	"github.com/nicoleyson/vestaboard-note/internal/tearoff"
 	"github.com/nicoleyson/vestaboard-note/internal/calendar"
 	"github.com/nicoleyson/vestaboard-note/internal/clock"
 	"github.com/nicoleyson/vestaboard-note/internal/countdown"
@@ -31,7 +32,7 @@ import (
 var subcommands = []string{
 	"weather", "clock", "calendar", "moon", "air",
 	"flights", "onthisday", "countdown", "discogs", "pattern",
-	"sunrise", "pollen", "uv", "rain", "season", "holiday", "satellites",
+	"sunrise", "pollen", "uv", "rain", "season", "holiday", "satellites", "tearoff",
 	"status", "completion",
 }
 
@@ -140,12 +141,13 @@ func runStatus(cfg config) {
 	}
 
 	printLines("pattern", pattern.Random(), nil)
+	printLines("tearoff", tearoff.Format(now), nil)
 }
 
 const bashCompletion = `_note_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local cmds="weather clock calendar moon air flights onthisday countdown discogs pattern sunrise pollen uv rain season holiday satellites status completion"
+    local cmds="weather clock calendar moon air flights onthisday countdown discogs pattern sunrise pollen uv rain season holiday satellites tearoff status completion"
     local patterns="random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow"
     if [[ "${prev}" == "pattern" ]]; then
         COMPREPLY=($(compgen -W "${patterns}" -- "${cur}"))
@@ -178,6 +180,7 @@ _note() {
         'season:current astronomical season with color'
         'holiday:today'"'"'s public holiday by location'
         'satellites:notable satellites currently overhead'
+        'tearoff:tear-off calendar showing today'"'"'s date'
         'status:preview all subcommands without sending'
         'completion:print shell completion script'
     )
@@ -222,6 +225,7 @@ complete -c note -n __fish_use_subcommand -a rain       -d 'Precipitation probab
 complete -c note -n __fish_use_subcommand -a season     -d 'Current astronomical season with color'
 complete -c note -n __fish_use_subcommand -a holiday    -d 'Today'"'"'s public holiday by location'
 complete -c note -n __fish_use_subcommand -a satellites -d 'Notable satellites currently overhead'
+complete -c note -n __fish_use_subcommand -a tearoff    -d 'Tear-off calendar showing today'"'"'s date'
 complete -c note -n __fish_use_subcommand -a status     -d 'Preview all subcommands without sending'
 complete -c note -n __fish_use_subcommand -a completion -d 'Print shell completion script'
 complete -c note -n '__fish_seen_subcommand_from pattern' -a 'random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow'
@@ -359,6 +363,8 @@ func main() {
 		lines, trivial, err = rain.Fetch(cfg.Lat, cfg.Lon)
 	case "season":
 		lines = season.Format(time.Now())
+	case "tearoff":
+		lines = tearoff.Format(time.Now())
 	case "holiday":
 		if cfg.Lat == 0 || cfg.Lon == 0 {
 			fmt.Fprintf(os.Stderr, "error: lat and lon required for holiday\n")
