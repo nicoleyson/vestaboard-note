@@ -34,8 +34,13 @@ type apiResponse struct {
 func fetchTimes(lat, lon float64, date time.Time) (rise, set time.Time, err error) {
 	url := fmt.Sprintf("https://api.sunrise-sunset.org/json?lat=%f&lng=%f&date=%s&formatted=0",
 		lat, lon, date.Local().Format("2006-01-02"))
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+	req.Header.Set("User-Agent", "vestaboard-note/1.0 (https://github.com/nicoleyson/vestaboard-note)")
 	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(url)
+	resp, err := client.Do(req)
 	if err != nil {
 		return time.Time{}, time.Time{}, err
 	}
