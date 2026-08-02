@@ -140,7 +140,7 @@ func renderWithTheme(t theme) [3]string {
 	case "pulse":
 		g = pulseP(pal)
 	default:
-		g = stripes()
+		g = stripesP(pal)
 	}
 	return g.toLines()
 }

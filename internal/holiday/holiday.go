@@ -3,6 +3,7 @@ package holiday
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -88,7 +89,7 @@ func findNext(holidays []nagerHoliday, after string) (name string, days int) {
 			if err != nil {
 				continue
 			}
-			return h.Name, int(d.Sub(afterTime).Hours() / 24)
+			return h.Name, int(math.Round(d.Sub(afterTime).Hours() / 24))
 		}
 	}
 	return "", 0

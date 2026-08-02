@@ -85,7 +85,7 @@ func Wrap(text string, width int) []string {
 				current = ""
 				space = width
 			}
-			lines = append(lines, string(wordRunes[:space]))
+			lines = append(lines, PadRight(string(wordRunes[:space]), width))
 			wordRunes = wordRunes[space:]
 			word = string(wordRunes)
 		}
