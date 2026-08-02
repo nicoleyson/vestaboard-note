@@ -23,9 +23,8 @@ type nominatimResponse struct {
 }
 
 type nagerHoliday struct {
-	Date   string `json:"date"`
-	Name   string `json:"localName"`
-	Global bool   `json:"global"`
+	Date string `json:"date"`
+	Name string `json:"localName"`
 }
 
 func getJSON(url string, target interface{}) error {
@@ -75,6 +74,73 @@ func todayHoliday(code string, now time.Time) (string, error) {
 	return "", nil
 }
 
+func artStrip(name string) string {
+	n := strings.ToUpper(name)
+
+	type rule struct {
+		keyword string
+		strip   string
+	}
+
+	rules := []rule{
+		// Christmas: red/green alternating
+		{"CHRISTMAS", "{63}{66}{63}{66}{63}{66}{63}{66}{63}{66}{63}{66}{63}{66}{63}"},
+		// New Year: violet/yellow sparkle
+		{"NEW YEAR", "{68}{65}{68}{65}{68}{65}{68}{65}{68}{65}{68}{65}{68}{65}{68}"},
+		// Halloween: orange/black
+		{"HALLOWEEN", "{64}{70}{64}{70}{64}{70}{64}{70}{64}{70}{64}{70}{64}{70}{64}"},
+		// Independence / 4th of July / National Day (generic): red/white/blue
+		{"INDEPENDENCE", "{63}{69}{67}{63}{69}{67}{63}{69}{67}{63}{69}{67}{63}{69}{67}"},
+		{"NATIONAL DAY", "{63}{69}{67}{63}{69}{67}{63}{69}{67}{63}{69}{67}{63}{69}{67}"},
+		// Thanksgiving: orange/yellow harvest
+		{"THANKSGIVING", "{64}{65}{64}{65}{64}{65}{64}{65}{64}{65}{64}{65}{64}{65}{64}"},
+		// Easter: red/green/yellow (bright pastels)
+		{"EASTER", "{63}{66}{65}{63}{66}{65}{63}{66}{65}{63}{66}{65}{63}{66}{65}"},
+		// Valentine's Day: red with hearts
+		{"VALENTINE", "{63}{62}{63}{62}{63}{62}{63}{62}{63}{62}{63}{62}{63}{62}{63}"},
+		// St. Patrick's Day: green/white
+		{"PATRICK", "{66}{69}{66}{69}{66}{69}{66}{69}{66}{69}{66}{69}{66}{69}{66}"},
+		// Diwali / Deepavali: yellow/orange festival of lights
+		{"DIWALI", "{65}{64}{65}{64}{65}{64}{65}{64}{65}{64}{65}{64}{65}{64}{65}"},
+		{"DEEPAVALI", "{65}{64}{65}{64}{65}{64}{65}{64}{65}{64}{65}{64}{65}{64}{65}"},
+		// Hanukkah: blue/white
+		{"HANUKKAH", "{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}"},
+		{"CHANUKAH", "{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}"},
+		// Lunar New Year / Chinese New Year: red/gold(yellow)
+		{"LUNAR NEW YEAR", "{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}"},
+		{"CHINESE NEW YEAR", "{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}"},
+		// Eid: green/white crescent palette
+		{"EID", "{66}{69}{66}{69}{66}{69}{66}{69}{66}{69}{66}{69}{66}{69}{66}"},
+		// Labor / Workers: blue/white
+		{"LABOR", "{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}"},
+		{"WORKERS", "{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}"},
+		// Memorial: red/white/blue
+		{"MEMORIAL", "{63}{69}{67}{63}{69}{67}{63}{69}{67}{63}{69}{67}{63}{69}{67}"},
+		// Veterans: red/white/blue
+		{"VETERANS", "{63}{69}{67}{63}{69}{67}{63}{69}{67}{63}{69}{67}{63}{69}{67}"},
+		// Martin Luther King: blue/white
+		{"MARTIN LUTHER", "{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}"},
+		// Presidents / Washington / Lincoln: red/white/blue
+		{"PRESIDENTS", "{63}{69}{67}{63}{69}{67}{63}{69}{67}{63}{69}{67}{63}{69}{67}"},
+		// Guy Fawkes: orange/black bonfire
+		{"GUY FAWKES", "{64}{70}{64}{70}{64}{70}{64}{70}{64}{70}{64}{70}{64}{70}{64}"},
+		// Bastille: blue/white/red (France)
+		{"BASTILLE", "{67}{69}{63}{67}{69}{63}{67}{69}{63}{67}{69}{63}{67}{69}{63}"},
+		// Anzac / Remembrance / Armistice: red/white (poppy)
+		{"ANZAC", "{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}"},
+		{"REMEMBRANCE", "{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}"},
+		{"ARMISTICE", "{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}"},
+	}
+
+	for _, r := range rules {
+		if strings.Contains(n, r.keyword) {
+			return r.strip
+		}
+	}
+
+	return layout.ColorRow(65)
+}
+
 func Fetch(lat, lon float64) ([3]string, bool, error) {
 	now := time.Now()
 
@@ -109,7 +175,7 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 	}
 
 	return [3]string{
-		layout.ColorRow(65),
+		artStrip(name),
 		row2,
 		row3,
 	}, false, nil
