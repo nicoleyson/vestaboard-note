@@ -61,13 +61,24 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 	}
 
 	ac := parseFirst(data.States)
+	if ac == nil {
+		return [3]string{
+			layout.Center("FLIGHTS", layout.Cols),
+			layout.Center("CLEAR SKIES", layout.Cols),
+			layout.Center("NONE OVERHEAD", layout.Cols),
+		}, true, nil
+	}
 
 	row1 := layout.Center("OVERHEAD", layout.Cols)
 	row2 := layout.Center(ac.callsign, layout.Cols)
 
 	altStr := ""
 	if ac.altitude > 0 {
-		altStr = fmt.Sprintf("%.0fFT", ac.altitude*3.28084)
+		if isFahrenheitCountry(lat, lon) {
+			altStr = fmt.Sprintf("%.0fFT", ac.altitude*3.28084)
+		} else {
+			altStr = fmt.Sprintf("%.0fM", ac.altitude)
+		}
 	}
 	row3 := layout.Center(altStr, layout.Cols)
 	if ac.origin != "" && altStr != "" {
@@ -77,7 +88,7 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 	return [3]string{row1, row2, row3}, false, nil
 }
 
-func parseFirst(states [][]interface{}) aircraft {
+func parseFirst(states [][]interface{}) *aircraft {
 	for _, s := range states {
 		if len(s) < 8 {
 			continue
@@ -100,7 +111,26 @@ func parseFirst(states [][]interface{}) aircraft {
 				origin = origin[:4]
 			}
 		}
-		return aircraft{callsign: callsign, altitude: altitude, origin: origin}
+		return &aircraft{callsign: callsign, altitude: altitude, origin: origin}
 	}
-	return aircraft{callsign: "UNKNOWN"}
+	return nil
+}
+
+func isFahrenheitCountry(lat, lon float64) bool {
+	if lat >= 24 && lat <= 49.5 && lon >= -125 && lon <= -66 {
+		return true
+	}
+	if lat >= 54 && lat <= 72 && lon >= -168 && lon <= -130 {
+		return true
+	}
+	if lat >= 18 && lat <= 23 && lon >= -161 && lon <= -154 {
+		return true
+	}
+	if lat >= 17 && lat <= 18.5 && lon >= -68 && lon <= -64 {
+		return true
+	}
+	if lat >= 4 && lat <= 8.5 && lon >= -11.5 && lon <= -7.5 {
+		return true
+	}
+	return false
 }
