@@ -1,0 +1,41 @@
+VESTABOARD_DIR={{VESTABOARD_DIR}}
+
+# Rain, pollen, and air quality skip posting when levels are trivial if --skip-trivial is passed.
+# Run manually without the flag to always send (good for testing).
+
+# ── Morning routine ──────────────────────────────────────────────
+5 8 * * *  {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} onthisday
+10 8 * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} countdown
+15 8 * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} holiday --skip-trivial
+25 9 * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} satellites --skip-trivial
+
+# ── Throughout the day ───────────────────────────────────────────
+# Weather every 30 minutes — the backbone. Board always returns to weather
+# within 30 minutes after any one-shot subcommand above.
+*/30 * * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} weather
+
+# Calendar at the top of every hour
+0 * * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} calendar
+
+# Sunrise/sunset during waking hours (offset to avoid :00 collision)
+2 8-22 * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} suntime
+
+# UV index during peak hours (offset to avoid collision)
+4 10-15 * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} uv
+
+# Rain check every morning — skips when chance is negligible
+10 8 * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} rain --skip-trivial
+
+# Air quality 3× a day (morning, midday, evening) — skips when air is good
+6 8,13,18 * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} air --skip-trivial
+
+# Pollen every morning — skips when levels are low
+20 8 * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} pollen --skip-trivial
+
+# ── Evening ──────────────────────────────────────────────────────
+# Moon phase at 9pm — best appreciated at night
+0 21 * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} moonphase
+
+# ── Screensaver ──────────────────────────────────────────────────
+# Tear-off calendar at midnight — stays up until weather reclaims the board at 8:30am
+0 0 * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} tearoff

@@ -65,61 +65,33 @@ Reload your shell after adding.
 | `tearoff` | Tear-off calendar showing today's date — red card with yellow tabs and white number | Point in time | — |
 | `status` | Preview all subcommands without sending to the board | — | — |
 
-## Recommended crontab
+## Crontab
 
-Run `crontab -e` and add entries like these. Set `VESTABOARD_DIR` at the top to your repo path — cron expands variables defined within the crontab itself on both macOS and Linux.
+The repo includes a `crontab.template` with the recommended schedule. Install it with:
 
-On macOS, `~` and `TZ=` are not reliably supported in crontab — use full absolute paths and omit `TZ=` (macOS cron inherits your system timezone automatically).
-
-```cron
-VESTABOARD_DIR=/Users/yourname/repos/nicoleyson/vestaboard-note
-
-# Rain, pollen, and air quality skip posting when levels are trivial if --skip-trivial is passed.
-# Run manually without the flag to always send (good for testing).
-
-# ── Morning routine ──────────────────────────────────────────────
-5 8 * * * cd $VESTABOARD_DIR && ./note onthisday
-10 8 * * * cd $VESTABOARD_DIR && ./note countdown
-15 8 * * * cd $VESTABOARD_DIR && ./note holiday --skip-trivial
-25 9 * * * cd $VESTABOARD_DIR && ./note satellites --skip-trivial
-
-# ── Throughout the day ───────────────────────────────────────────
-# Weather every 30 minutes — the backbone. Board always returns to weather
-# within 30 minutes after any one-shot subcommand above.
-*/30 * * * * cd $VESTABOARD_DIR && ./note weather
-
-# Calendar at the top of every hour
-0 * * * * cd $VESTABOARD_DIR && ./note calendar
-
-# Sunrise/sunset during waking hours (offset to avoid :00 collision)
-2 8-22 * * * cd $VESTABOARD_DIR && ./note suntime
-
-# UV index during peak hours (offset to avoid collision)
-4 10-15 * * * cd $VESTABOARD_DIR && ./note uv
-
-# Rain check every morning — skips when chance is negligible
-10 8 * * * cd $VESTABOARD_DIR && ./note rain --skip-trivial
-
-# Air quality 3× a day (morning, midday, evening) — skips when air is good
-6 8,13,18 * * * cd $VESTABOARD_DIR && ./note air --skip-trivial
-
-# Pollen every morning — skips when levels are low
-20 8 * * * cd $VESTABOARD_DIR && ./note pollen --skip-trivial
-
-# ── Evening ──────────────────────────────────────────────────────
-# Moon phase at 9pm — best appreciated at night
-0 21 * * * cd $VESTABOARD_DIR && ./note moonphase
-
-# ── Screensaver ──────────────────────────────────────────────────
-# Tear-off calendar at midnight — stays up until weather reclaims the board at 8:30am
-0 0 * * * cd $VESTABOARD_DIR && ./note tearoff
+```sh
+make cron          # smart: adds on first run, updates on subsequent runs
+make cron-init     # first-time only — aborts if already installed
+make cron-update   # always replace with current template
+make cron-uninstall
 ```
 
-If you want the clock cycling constantly (good for a display you glance at all day), use a high-frequency setup instead:
+By default `VESTABOARD_DIR` is set to the current directory and `NOTE_BIN` to `$(VESTABOARD_DIR)/note`. Override either:
+
+```sh
+make cron VESTABOARD_DIR=/custom/path
+make cron NOTE_BIN=/usr/local/bin/note   # if you ran make install
+```
+
+**macOS**: entries are merged into your user crontab (via `crontab -e`) inside a `# BEGIN VESTABOARD` / `# END VESTABOARD` block. `make cron-update` replaces just that block, leaving the rest of your crontab untouched.
+
+**Linux**: entries are written to `/etc/cron.d/vestaboard` (requires `sudo`). The username column is added automatically.
+
+The template runs weather every 30 minutes as a backbone, with one-shot subcommands sprinkled through the morning and evening. To see the full schedule, read `crontab.template` directly.
+
+If you want the clock cycling constantly (good for a display you glance at all day), edit `crontab.template` and replace the weather backbone with:
 
 ```cron
-VESTABOARD_DIR=/Users/yourname/repos/nicoleyson/vestaboard-note
-
 * * * * *    cd $VESTABOARD_DIR && ./note clock
 */15 * * * * cd $VESTABOARD_DIR && ./note sunscene
 */30 * * * * cd $VESTABOARD_DIR && ./note weather
