@@ -9,37 +9,19 @@ import (
 )
 
 const (
+	cols = 15
+	rows = 3
+)
+
+const (
 	red    = 63
 	orange = 64
 	yellow = 65
 	blue   = 67
 	violet = 68
+	white  = 69
 	black  = 70
 )
-
-var sunriseScene = [3][15]int{
-	{black, black, black, violet, violet, blue, blue, blue, violet, violet, black, black, black, black, black},
-	{violet, blue, yellow, yellow, yellow, yellow, yellow, yellow, yellow, yellow, blue, violet, violet, black, black},
-	{orange, orange, red, red, orange, yellow, yellow, yellow, orange, red, red, orange, orange, violet, black},
-}
-
-var sunsetScene = [3][15]int{
-	{blue, violet, violet, red, red, orange, orange, orange, red, red, violet, violet, blue, blue, black},
-	{orange, red, red, yellow, yellow, yellow, yellow, yellow, yellow, yellow, red, red, orange, violet, blue},
-	{red, red, red, orange, red, red, orange, orange, red, red, orange, red, red, red, violet},
-}
-
-func toLines(scene [3][15]int) [3]string {
-	var lines [3]string
-	for r := 0; r < 3; r++ {
-		var b strings.Builder
-		for c := 0; c < 15; c++ {
-			fmt.Fprintf(&b, "{%d}", scene[r][c])
-		}
-		lines[r] = b.String()
-	}
-	return lines
-}
 
 type apiResponse struct {
 	Results struct {
@@ -76,21 +58,145 @@ func fetchTimes(lat, lon float64, date time.Time) (rise, set time.Time, err erro
 	return rise, set, nil
 }
 
+// sunRow maps 0–1 daylight progress to a board row (0=top, 2=bottom).
+// The sun sits at the bottom near dawn/dusk, rises to mid-sky through the
+// morning, and reaches the top row only around solar noon.
+func sunRow(progress float64) int {
+	switch {
+	case progress < 0.15 || progress > 0.85:
+		return 2
+	case progress < 0.35 || progress > 0.65:
+		return 1
+	default:
+		return 0
+	}
+}
+
+// skyPalette returns the sky colors above, at, and below the sun row
+// based on daylight progress. Colors shift from dawn reds through
+// golden-hour oranges to midday blue.
+func skyPalette(progress float64) (aboveSun, atSun, belowSun int) {
+	switch {
+	case progress < 0.10:
+		return black, red, black
+	case progress < 0.20:
+		return violet, orange, red
+	case progress < 0.35:
+		return blue, orange, orange
+	case progress < 0.65:
+		return blue, blue, orange
+	case progress < 0.80:
+		return blue, orange, orange
+	case progress < 0.90:
+		return violet, orange, red
+	default:
+		return black, red, black
+	}
+}
+
+func renderDay(progress float64) [3]string {
+	sr := sunRow(progress)
+	above, at, below := skyPalette(progress)
+
+	palette := [rows]int{}
+	for r := 0; r < rows; r++ {
+		switch {
+		case r < sr:
+			palette[r] = above
+		case r == sr:
+			palette[r] = at
+		default:
+			palette[r] = below
+		}
+	}
+
+	var g [rows][cols]int
+	for r := 0; r < rows; r++ {
+		for c := 0; c < cols; c++ {
+			g[r][c] = palette[r]
+		}
+	}
+
+	g[sr][7] = yellow
+	g[sr][6] = orange
+	g[sr][8] = orange
+
+	return toLines(g)
+}
+
+func renderNight(progress float64) [3]string {
+	mr := sunRow(progress)
+
+	var g [rows][cols]int
+	for r := 0; r < rows; r++ {
+		for c := 0; c < cols; c++ {
+			if r < mr {
+				g[r][c] = black
+			} else if r == mr {
+				g[r][c] = violet
+			} else {
+				g[r][c] = black
+			}
+		}
+	}
+
+	g[mr][7] = white
+	g[mr][6] = violet
+	g[mr][8] = violet
+
+	return toLines(g)
+}
+
+func toLines(g [rows][cols]int) [3]string {
+	var lines [3]string
+	for r := 0; r < rows; r++ {
+		var b strings.Builder
+		for c := 0; c < cols; c++ {
+			fmt.Fprintf(&b, "{%d}", g[r][c])
+		}
+		lines[r] = b.String()
+	}
+	return lines
+}
+
 func Fetch(lat, lon float64) ([3]string, error) {
 	now := time.Now()
 	rise, set, err := fetchTimes(lat, lon, now)
 	if err != nil {
 		return [3]string{}, err
 	}
-	if now.After(set) {
-		tomorrow := now.AddDate(0, 0, 1)
-		rise, set, err = fetchTimes(lat, lon, tomorrow)
+
+	if now.After(rise) && now.Before(set) {
+		dayLen := set.Sub(rise).Seconds()
+		elapsed := now.Sub(rise).Seconds()
+		return renderDay(elapsed / dayLen), nil
+	}
+
+	var nightStart, nextRise time.Time
+	if now.Before(rise) {
+		yesterday := now.AddDate(0, 0, -1)
+		_, nightStart, err = fetchTimes(lat, lon, yesterday)
 		if err != nil {
-			return [3]string{}, err
+			return renderNight(0.5), nil
+		}
+		nextRise = rise
+	} else {
+		nightStart = set
+		tomorrow := now.AddDate(0, 0, 1)
+		nextRise, _, err = fetchTimes(lat, lon, tomorrow)
+		if err != nil {
+			return renderNight(0.5), nil
 		}
 	}
-	if now.Before(rise) {
-		return toLines(sunriseScene), nil
+
+	nightLen := nextRise.Sub(nightStart).Seconds()
+	elapsed := now.Sub(nightStart).Seconds()
+	progress := elapsed / nightLen
+	if progress < 0 {
+		progress = 0
 	}
-	return toLines(sunsetScene), nil
+	if progress > 1 {
+		progress = 1
+	}
+	return renderNight(progress), nil
 }
