@@ -69,28 +69,27 @@ func Format(t time.Time) [3]string {
 	return render(Calculate(t))
 }
 
+func tileColor(i, litCols int, waxing bool) int {
+	if waxing {
+		if i < litCols {
+			return colorLit
+		}
+		return colorDark
+	}
+	darkCols := layout.Cols - litCols
+	if i < darkCols {
+		return colorDark
+	}
+	return colorLit
+}
+
 func render(p Phase) [3]string {
 	litCols := int(math.Round(p.Illumination * float64(layout.Cols)))
 
 	colorLine := func() string {
 		var sb strings.Builder
 		for i := 0; i < layout.Cols; i++ {
-			var col int
-			if p.Waxing {
-				if i < litCols {
-					col = colorLit
-				} else {
-					col = colorDark
-				}
-			} else {
-				darkCols := layout.Cols - litCols
-				if i < darkCols {
-					col = colorDark
-				} else {
-					col = colorLit
-				}
-			}
-			sb.WriteString(fmt.Sprintf("{%d}", col))
+			sb.WriteString(fmt.Sprintf("{%d}", tileColor(i, litCols, p.Waxing)))
 		}
 		return sb.String()
 	}
@@ -106,21 +105,7 @@ func nameOverlay(name string, litCols int, waxing bool) string {
 	centered := layout.Center(name, layout.Cols)
 	var sb strings.Builder
 	for i, r := range []rune(centered) {
-		var col int
-		if waxing {
-			if i < litCols {
-				col = colorLit
-			} else {
-				col = colorDark
-			}
-		} else {
-			darkCols := layout.Cols - litCols
-			if i < darkCols {
-				col = colorDark
-			} else {
-				col = colorLit
-			}
-		}
+		col := tileColor(i, litCols, waxing)
 		if r == ' ' {
 			sb.WriteString(fmt.Sprintf("{%d}", col))
 		} else {
