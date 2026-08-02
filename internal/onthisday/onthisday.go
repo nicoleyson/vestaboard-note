@@ -75,7 +75,7 @@ func pickEvent(events []wikiEvent) wikiEvent {
 	var clean []int
 	for i, e := range events {
 		wrapped := layout.Wrap(layout.StripEmoji(e.Text), layout.Cols)
-		if len(wrapped) > 0 && len([]rune(wrapped[0])) == layout.Cols && !endsWithTilde(wrapped[0]) {
+		if len(wrapped) > 0 && !endsWithTilde(wrapped[0]) {
 			clean = append(clean, i)
 		}
 	}
