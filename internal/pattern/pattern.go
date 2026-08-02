@@ -21,10 +21,7 @@ const (
 	cHeart  = 62
 )
 
-var allColors = []int{cRed, cOrange, cYellow, cGreen, cBlue, cViolet, cWhite, cBlack}
 var brightColors = []int{cRed, cOrange, cYellow, cGreen, cBlue, cViolet}
-var warmColors = []int{cRed, cOrange, cYellow}
-var coolColors = []int{cGreen, cBlue, cViolet}
 
 var gradientPalettes = [][]int{
 	{cYellow, cOrange, cRed},
