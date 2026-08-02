@@ -74,6 +74,8 @@ ifeq ($(UNAME), Linux)
 	@echo "Installed to /etc/cron.d/vestaboard"
 else
 	@( \
+	  crontab -l 2>/dev/null \
+	  | awk '/# BEGIN VESTABOARD/{found=1} !found{print} /# END VESTABOARD/{found=0}'; \
 	  echo '# BEGIN VESTABOARD'; \
 	  cat /tmp/vestaboard-cron; \
 	  echo '# END VESTABOARD' \
@@ -116,6 +118,8 @@ ifeq ($(UNAME), Linux)
 	sudo rm -f /etc/cron.d/vestaboard
 	@echo "Removed /etc/cron.d/vestaboard"
 else
-	@crontab -r 2>/dev/null || true
-	@echo "Removed vestaboard crontab"
+	@( crontab -l 2>/dev/null \
+	  | awk '/# BEGIN VESTABOARD/{found=1} !found{print} /# END VESTABOARD/{found=0}' \
+	) | crontab -
+	@echo "Removed vestaboard block from crontab"
 endif
