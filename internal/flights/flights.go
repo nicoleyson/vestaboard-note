@@ -1,6 +1,7 @@
 package flights
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -29,7 +30,9 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 		apiURL, lat-delta, lon-delta, lat+delta, lon+delta)
 
 	client := &http.Client{Timeout: 15 * time.Second}
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return [3]string{}, true, err
 	}

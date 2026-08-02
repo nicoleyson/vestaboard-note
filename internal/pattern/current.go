@@ -247,6 +247,9 @@ func confettiP(pal []int) grid {
 }
 
 func sparkleP(pal []int) grid {
+	if len(pal) < 2 {
+		return stripesP(pal)
+	}
 	var g grid
 	bg := pal[len(pal)-1]
 	density := 4 + rand.Intn(6)
