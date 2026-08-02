@@ -2,6 +2,7 @@ package onthisday
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -25,7 +26,9 @@ type apiResponse struct {
 func Fetch(t time.Time) ([3]string, error) {
 	url := fmt.Sprintf(apiURL, t.Month(), t.Day())
 	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return [3]string{}, err
 	}

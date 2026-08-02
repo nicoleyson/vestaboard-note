@@ -47,7 +47,7 @@ make cron            # installs the recommended crontab schedule
 | `sunscene` | Animated sky scene — sun arc and sky color shift through the day | `lat`, `lon` |
 | `air` | US AQI with color row (green → hazardous) | `lat`, `lon` |
 | `uv` | UV index with color scale | `lat`, `lon` |
-| `rain` | Precipitation probability and intensity | `lat`, `lon` |
+| `rain` | Precipitation level and intensity | `lat`, `lon` |
 | `pollen` | Pollen level and dominant type (grass / tree / weed) | `lat`, `lon` |
 | `flights` | Aircraft currently overhead — callsign, origin, altitude | `lat`, `lon` |
 | `satellites` | Notable satellite overhead — ISS, GPS, Iridium — with elevation and direction | `lat`, `lon` |

@@ -2,6 +2,7 @@ package vestaboard
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -123,7 +124,7 @@ func (c *Client) SendLines(lines [rows]string) error {
 		return err
 	}
 
-	req, err := http.NewRequest(http.MethodPost, baseURL+"/", bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, baseURL+"/", bytes.NewReader(body))
 	if err != nil {
 		return err
 	}
