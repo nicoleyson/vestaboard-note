@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nicoleyson/vestaboard-note/internal/geo"
 	"github.com/nicoleyson/vestaboard-note/internal/layout"
 )
 
@@ -17,30 +18,6 @@ const (
 	metarURL         = "https://aviationweather.gov/api/data/metar"
 	metarSearchDelta = 2.0
 )
-
-func isFahrenheitCountry(lat, lon float64) bool {
-	// Continental US
-	if lat >= 24 && lat <= 49.5 && lon >= -125 && lon <= -66 {
-		return true
-	}
-	// Alaska
-	if lat >= 54 && lat <= 72 && lon >= -168 && lon <= -130 {
-		return true
-	}
-	// Hawaii
-	if lat >= 18 && lat <= 23 && lon >= -161 && lon <= -154 {
-		return true
-	}
-	// Puerto Rico + US Virgin Islands
-	if lat >= 17 && lat <= 18.5 && lon >= -68 && lon <= -64 {
-		return true
-	}
-	// Liberia
-	if lat >= 4 && lat <= 8.5 && lon >= -11.5 && lon <= -7.5 {
-		return true
-	}
-	return false
-}
 
 func getJSON(ctx context.Context, url string, target interface{}) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -171,7 +148,7 @@ func Fetch(lat, lon float64) ([3]string, error) {
 	}
 
 	obs := results[0]
-	fahrenheit := isFahrenheitCountry(lat, lon)
+	fahrenheit := geo.IsFahrenheitCountry(lat, lon)
 	var temp float64
 	var unit string
 	if fahrenheit {

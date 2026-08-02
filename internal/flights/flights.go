@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nicoleyson/vestaboard-note/internal/geo"
 	"github.com/nicoleyson/vestaboard-note/internal/layout"
 )
 
@@ -28,7 +29,7 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 		apiURL, lat-delta, lon-delta, lat+delta, lon+delta)
 
 	client := &http.Client{Timeout: 15 * time.Second}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return [3]string{}, true, err
 	}
@@ -74,7 +75,7 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 
 	altStr := ""
 	if ac.altitude > 0 {
-		if isFahrenheitCountry(lat, lon) {
+		if geo.IsFahrenheitCountry(lat, lon) {
 			altStr = fmt.Sprintf("%.0fFT", ac.altitude*3.28084)
 		} else {
 			altStr = fmt.Sprintf("%.0fM", ac.altitude)
@@ -114,23 +115,4 @@ func parseFirst(states [][]interface{}) *aircraft {
 		return &aircraft{callsign: callsign, altitude: altitude, origin: origin}
 	}
 	return nil
-}
-
-func isFahrenheitCountry(lat, lon float64) bool {
-	if lat >= 24 && lat <= 49.5 && lon >= -125 && lon <= -66 {
-		return true
-	}
-	if lat >= 54 && lat <= 72 && lon >= -168 && lon <= -130 {
-		return true
-	}
-	if lat >= 18 && lat <= 23 && lon >= -161 && lon <= -154 {
-		return true
-	}
-	if lat >= 17 && lat <= 18.5 && lon >= -68 && lon <= -64 {
-		return true
-	}
-	if lat >= 4 && lat <= 8.5 && lon >= -11.5 && lon <= -7.5 {
-		return true
-	}
-	return false
 }
