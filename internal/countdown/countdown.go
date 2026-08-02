@@ -46,14 +46,30 @@ func Format(events []Event, now time.Time) [3]string {
 }
 
 func nearest(events []Event, now time.Time) Event {
-	best := events[0]
-	bestDiff := math.Abs(events[0].Date.Sub(now).Hours())
-	for _, e := range events[1:] {
-		diff := math.Abs(e.Date.Sub(now).Hours())
-		if diff < bestDiff {
-			bestDiff = diff
-			best = e
+	var bestFuture *Event
+	bestFutureDiff := math.MaxFloat64
+	var bestPast *Event
+	bestPastDiff := math.MaxFloat64
+
+	for i := range events {
+		e := &events[i]
+		diff := e.Date.Sub(now).Hours()
+		if diff >= 0 {
+			if diff < bestFutureDiff {
+				bestFutureDiff = diff
+				bestFuture = e
+			}
+		} else {
+			absDiff := -diff
+			if absDiff < bestPastDiff {
+				bestPastDiff = absDiff
+				bestPast = e
+			}
 		}
 	}
-	return best
+
+	if bestFuture != nil {
+		return *bestFuture
+	}
+	return *bestPast
 }

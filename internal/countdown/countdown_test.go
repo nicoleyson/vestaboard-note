@@ -1,6 +1,7 @@
 package countdown
 
 import (
+	"strings"
 	"testing"
 	"time"
 )
@@ -38,7 +39,7 @@ func TestFormat_inDays(t *testing.T) {
 }
 
 func TestFormat_today(t *testing.T) {
-	// Event is at midnight; now is 6 hours later same day → days = ceil(-6/24) = 0
+	// Event is at midnight; now is 6 hours later same day → days = ceil(-0.25) = 0
 	now := time.Date(2025, 7, 4, 6, 0, 0, 0, time.UTC)
 	events := []Event{
 		{Label: "VACATION", Date: time.Date(2025, 7, 4, 0, 0, 0, 0, time.UTC)},
@@ -107,12 +108,8 @@ func TestFormat_nearestPicked(t *testing.T) {
 
 	found := false
 	for _, l := range lines {
-		if len([]rune(l)) == 15 {
-			runes := []rune(l)
-			s := string(runes)
-			if containsStr(s, "NEAR") {
-				found = true
-			}
+		if strings.Contains(l, "NEAR") {
+			found = true
 		}
 	}
 	if !found {
@@ -120,15 +117,22 @@ func TestFormat_nearestPicked(t *testing.T) {
 	}
 }
 
-func containsStr(s, sub string) bool {
-	return len(s) >= len(sub) && (s == sub || len(s) > 0 && containsRune(s, sub))
-}
+func TestFormat_prefersFutureOverPast(t *testing.T) {
+	now := time.Date(2025, 7, 10, 12, 0, 0, 0, time.UTC)
+	events := []Event{
+		{Label: "PAST", Date: time.Date(2025, 7, 8, 12, 0, 0, 0, time.UTC)},
+		{Label: "FUTURE", Date: time.Date(2025, 7, 15, 12, 0, 0, 0, time.UTC)},
+	}
+	lines := Format(events, now)
+	checkRows(t, lines)
 
-func containsRune(s, sub string) bool {
-	for i := 0; i <= len(s)-len(sub); i++ {
-		if s[i:i+len(sub)] == sub {
-			return true
+	found := false
+	for _, l := range lines {
+		if strings.Contains(l, "FUTURE") {
+			found = true
 		}
 	}
-	return false
+	if !found {
+		t.Errorf("future event not preferred over closer past event: got %q %q %q", lines[0], lines[1], lines[2])
+	}
 }
