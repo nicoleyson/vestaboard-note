@@ -21,7 +21,7 @@ func TestCharCode(t *testing.T) {
 		{'.', 56},
 		{'%', 54},
 		{'?', 60},
-		{'°', 62},
+		{'°', 0},
 		{'€', 0},
 	}
 	for _, tt := range tests {

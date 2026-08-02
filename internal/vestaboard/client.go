@@ -78,7 +78,7 @@ func charCode(r rune) int {
 	case r == '?':
 		return 60
 	case r == '°':
-		return 62
+		return 0 // no degree glyph on Vestaboard; render as space
 	default:
 		return 0
 	}
