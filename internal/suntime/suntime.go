@@ -63,7 +63,7 @@ func Fetch(lat, lon float64) ([3]string, error) {
 }
 
 func fetchTimes(lat, lon float64, date time.Time) (rise, set time.Time, err error) {
-	dateStr := date.Format("2006-01-02")
+	dateStr := date.Local().Format("2006-01-02")
 	url := fmt.Sprintf("%s?lat=%f&lng=%f&date=%s&formatted=0", apiURL, lat, lon, dateStr)
 
 	client := &http.Client{Timeout: 10 * time.Second}

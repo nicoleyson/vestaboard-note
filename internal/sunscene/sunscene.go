@@ -33,7 +33,7 @@ type apiResponse struct {
 
 func fetchTimes(lat, lon float64, date time.Time) (rise, set time.Time, err error) {
 	url := fmt.Sprintf("https://api.sunrise-sunset.org/json?lat=%f&lng=%f&date=%s&formatted=0",
-		lat, lon, date.Format("2006-01-02"))
+		lat, lon, date.Local().Format("2006-01-02"))
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Get(url)
 	if err != nil {
