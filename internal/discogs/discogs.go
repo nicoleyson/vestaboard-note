@@ -37,7 +37,7 @@ type record struct {
 }
 
 func fetchCollection(username, token string) ([]record, error) {
-	client := &http.Client{}
+	client := &http.Client{Timeout: 60 * time.Second}
 	var records []record
 	page := 1
 	for {
@@ -183,7 +183,7 @@ func fetchWMO(lat, lon float64) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	client := &http.Client{}
+	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return 0, err
