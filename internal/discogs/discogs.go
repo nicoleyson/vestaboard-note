@@ -56,14 +56,16 @@ func fetchCollection(username, token string) ([]record, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
 			return nil, fmt.Errorf("discogs API returned %d", resp.StatusCode)
 		}
 
 		var pg collectionPage
-		if err := json.NewDecoder(resp.Body).Decode(&pg); err != nil {
+		err = json.NewDecoder(resp.Body).Decode(&pg)
+		resp.Body.Close()
+		if err != nil {
 			return nil, err
 		}
 
@@ -187,6 +189,10 @@ func fetchWMO(lat, lon float64) (int, error) {
 		return 0, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return 0, fmt.Errorf("open-meteo wmo status %d", resp.StatusCode)
+	}
 
 	var data struct {
 		Current struct {
