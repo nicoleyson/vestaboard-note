@@ -120,12 +120,13 @@ If you want the clock cycling constantly (good for a display you glance at all d
 ```cron
 VESTABOARD_DIR=/Users/yourname/repos/nicoleyson/vestaboard-note
 
-* * * * * cd $VESTABOARD_DIR && ./note clock
+* * * * *    cd $VESTABOARD_DIR && ./note clock
+*/15 * * * * cd $VESTABOARD_DIR && ./note sunscene
 */30 * * * * cd $VESTABOARD_DIR && ./note weather
-0 * * * * cd $VESTABOARD_DIR && ./note calendar
+0 * * * *    cd $VESTABOARD_DIR && ./note calendar
 ```
 
-The Vestaboard rate limit is 1 message per 15 seconds, so `clock` every minute is the fastest practical cadence.
+The Vestaboard rate limit is 1 message per 15 seconds, so `clock` every minute is the fastest practical cadence. `sunscene` every 15 minutes is enough to show the sun visibly moving through rows as the day progresses.
 
 ## Config reference
 
