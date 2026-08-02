@@ -64,55 +64,59 @@ Reload your shell after adding.
 
 ## Recommended crontab
 
-Run `crontab -e` and add entries like these. Replace `/Users/yourname` with your actual home directory path.
+Run `crontab -e` and add entries like these. Set `VESTABOARD_DIR` at the top to your repo path — cron expands variables defined within the crontab itself on both macOS and Linux.
 
 On macOS, `~` and `TZ=` are not reliably supported in crontab — use full absolute paths and omit `TZ=` (macOS cron inherits your system timezone automatically).
 
 ```cron
+VESTABOARD_DIR=/Users/yourname/repos/nicoleyson/vestaboard-note
+
 # Rain, pollen, and air quality skip posting when levels are trivial if --skip-trivial is passed.
 # Run manually without the flag to always send (good for testing).
 
 # ── Morning routine ──────────────────────────────────────────────
-5 8 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note onthisday
-10 8 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note countdown
-15 8 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note holiday --skip-trivial
+5 8 * * * cd $VESTABOARD_DIR && ./note onthisday
+10 8 * * * cd $VESTABOARD_DIR && ./note countdown
+15 8 * * * cd $VESTABOARD_DIR && ./note holiday --skip-trivial
 
 # ── Throughout the day ───────────────────────────────────────────
 # Weather every 30 minutes
-*/30 * * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note weather
+*/30 * * * * cd $VESTABOARD_DIR && ./note weather
 
 # Calendar at the top of every hour
-0 * * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note calendar
+0 * * * * cd $VESTABOARD_DIR && ./note calendar
 
 # Sunrise/sunset during waking hours (offset to avoid :00 collision)
-2 8-22 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note sunrise
+2 8-22 * * * cd $VESTABOARD_DIR && ./note sunrise
 
 # UV index during peak hours (offset to avoid collision)
-4 10-15 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note uv
+4 10-15 * * * cd $VESTABOARD_DIR && ./note uv
 
 # Rain check every morning — skips when chance is negligible
-10 8 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note rain --skip-trivial
+10 8 * * * cd $VESTABOARD_DIR && ./note rain --skip-trivial
 
 # Air quality 3× a day (morning, midday, evening) — skips when air is good
-6 8,13,18 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note air --skip-trivial
+6 8,13,18 * * * cd $VESTABOARD_DIR && ./note air --skip-trivial
 
 # Pollen every morning — skips when levels are low
-20 8 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note pollen --skip-trivial
+20 8 * * * cd $VESTABOARD_DIR && ./note pollen --skip-trivial
 
 # ── Evening ──────────────────────────────────────────────────────
 # Moon phase at 9pm — best appreciated at night
-0 21 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note moon
+0 21 * * * cd $VESTABOARD_DIR && ./note moon
 
 # ── Screensaver ──────────────────────────────────────────────────
-0 0 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note pattern
+0 0 * * * cd $VESTABOARD_DIR && ./note pattern
 ```
 
 If you want the clock cycling constantly (good for a display you glance at all day), use a high-frequency setup instead:
 
 ```cron
-* * * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note clock
-*/30 * * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note weather
-0 * * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note calendar
+VESTABOARD_DIR=/Users/yourname/repos/nicoleyson/vestaboard-note
+
+* * * * * cd $VESTABOARD_DIR && ./note clock
+*/30 * * * * cd $VESTABOARD_DIR && ./note weather
+0 * * * * cd $VESTABOARD_DIR && ./note calendar
 ```
 
 The Vestaboard rate limit is 1 message per 15 seconds, so `clock` every minute is the fastest practical cadence.
