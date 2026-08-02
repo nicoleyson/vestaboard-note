@@ -43,6 +43,48 @@ func TestFormat_fullMoon(t *testing.T) {
 	}
 }
 
+func TestPhaseName(t *testing.T) {
+	period := 29.53058867
+	cases := []struct {
+		frac float64
+		want string
+	}{
+		{0.00, "NEW MOON"},
+		{0.01, "NEW MOON"},
+		{0.015, "NEW MOON"},
+		{0.02, "WAX CRESCENT"},
+		{0.10, "WAX CRESCENT"},
+		{0.22, "WAX CRESCENT"},
+		{0.23, "FIRST QUARTER"},
+		{0.25, "FIRST QUARTER"},
+		{0.269, "FIRST QUARTER"},
+		{0.27, "WAX GIBBOUS"},
+		{0.40, "WAX GIBBOUS"},
+		{0.479, "WAX GIBBOUS"},
+		{0.48, "FULL MOON"},
+		{0.50, "FULL MOON"},
+		{0.519, "FULL MOON"},
+		{0.52, "WAN GIBBOUS"},
+		{0.60, "WAN GIBBOUS"},
+		{0.729, "WAN GIBBOUS"},
+		{0.73, "LAST QUARTER"},
+		{0.75, "LAST QUARTER"},
+		{0.769, "LAST QUARTER"},
+		{0.77, "WAN CRESCENT"},
+		{0.90, "WAN CRESCENT"},
+		{0.979, "WAN CRESCENT"},
+		{0.98, "NEW MOON"},
+		{0.999, "NEW MOON"},
+	}
+	for _, tc := range cases {
+		cycle := tc.frac * period
+		got := phaseName(cycle, period)
+		if got != tc.want {
+			t.Errorf("frac=%.3f: got %q, want %q", tc.frac, got, tc.want)
+		}
+	}
+}
+
 // countTiles counts logical display tiles in an encoded line.
 // {N} sequences count as 1; each other rune counts as 1.
 func countTiles(s string) int {

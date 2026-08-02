@@ -2,6 +2,8 @@ package weather
 
 import (
 	"testing"
+
+	"github.com/nicoleyson/vestaboard-note/internal/geo"
 )
 
 func TestDescFromMetar(t *testing.T) {
@@ -76,9 +78,9 @@ func TestIsFahrenheitCountry(t *testing.T) {
 		{"Sydney AU", -33.9, 151.2, false},
 	}
 	for _, tt := range tests {
-		got := isFahrenheitCountry(tt.lat, tt.lon)
+		got := geo.IsFahrenheitCountry(tt.lat, tt.lon)
 		if got != tt.want {
-			t.Errorf("isFahrenheitCountry(%s: %.1f, %.1f) = %v, want %v", tt.name, tt.lat, tt.lon, got, tt.want)
+			t.Errorf("IsFahrenheitCountry(%s: %.1f, %.1f) = %v, want %v", tt.name, tt.lat, tt.lon, got, tt.want)
 		}
 	}
 }
