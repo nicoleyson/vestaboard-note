@@ -57,7 +57,7 @@ func Fetch(urls []string) ([3]string, error) {
 	for _, url := range urls {
 		events, err := fetchURL(url, client)
 		if err != nil {
-			return [3]string{}, err
+			continue
 		}
 		for _, e := range events {
 			if seen[e.uid] {
