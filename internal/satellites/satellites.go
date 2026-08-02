@@ -13,9 +13,10 @@ import (
 
 // interesting categories to surface — exclude DEBRIS and STARLINK (hundreds, noisy)
 var interestingCategories = map[string]bool{
-	"OTHER":   true,
-	"GPS":     true,
-	"IRIDIUM": true,
+	"OTHER":    true,
+	"GPS":      true,
+	"IRIDIUM":  true,
+	"STATIONS": true, // ISS and other space stations
 }
 
 type satellite struct {
@@ -71,7 +72,11 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 
 	name := cleanName(best.Name)
 	row2 := layout.Center(name, layout.Cols)
-	row3 := layout.Center(fmt.Sprintf("%d DEG  %s", int(best.ElevationDeg), best.Direction), layout.Cols)
+	dir := best.Direction
+	if runes := []rune(dir); len(runes) > 2 {
+		dir = string(runes[:2])
+	}
+	row3 := layout.Center(fmt.Sprintf("%d DEG %s", int(best.ElevationDeg), dir), layout.Cols)
 
 	colorCode := colorForCategory(best.Category)
 	lines := [3]string{
