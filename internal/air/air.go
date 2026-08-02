@@ -26,6 +26,10 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return [3]string{}, false, fmt.Errorf("open-meteo air quality status %d", resp.StatusCode)
+	}
+
 	var data apiResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return [3]string{}, false, err
