@@ -47,16 +47,7 @@ func nameFor(s Season) string {
 func phaseLabel(s Season, progress float64) string {
 	switch {
 	case progress < 0.15:
-		switch s {
-		case Spring:
-			return "IS HERE"
-		case Summer:
-			return "IS HERE"
-		case Fall:
-			return "IS HERE"
-		default:
-			return "IS HERE"
-		}
+		return "IS HERE"
 	case progress < 0.40:
 		switch s {
 		case Spring:
@@ -69,27 +60,9 @@ func phaseLabel(s Season, progress float64) string {
 			return "SETTING IN"
 		}
 	case progress < 0.65:
-		switch s {
-		case Spring:
-			return "IN FULL SWING"
-		case Summer:
-			return "IN FULL SWING"
-		case Fall:
-			return "IN FULL SWING"
-		default:
-			return "IN FULL SWING"
-		}
+		return "IN FULL SWING"
 	case progress < 0.85:
-		switch s {
-		case Spring:
-			return "WINDING DOWN"
-		case Summer:
-			return "WINDING DOWN"
-		case Fall:
-			return "WINDING DOWN"
-		default:
-			return "WINDING DOWN"
-		}
+		return "WINDING DOWN"
 	default:
 		switch s {
 		case Spring:
