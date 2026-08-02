@@ -134,3 +134,35 @@ func TestFetch_live(t *testing.T) {
 	}
 }
 
+func TestFetch_row3IsCentered(t *testing.T) {
+	body, _ := json.Marshal(map[string]interface{}{
+		"events": []map[string]interface{}{
+			{"year": 1776, "text": "Hi"},
+		},
+	})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(body)
+	}))
+	defer srv.Close()
+
+	old := apiURL
+	apiURL = srv.URL + "/%d/%d"
+	defer func() { apiURL = old }()
+
+	lines, err := Fetch(time.Now())
+	if err != nil {
+		t.Fatalf("Fetch error: %v", err)
+	}
+	row3 := lines[2]
+	if len([]rune(row3)) != 15 {
+		t.Fatalf("row3 len = %d, want 15", len([]rune(row3)))
+	}
+	if !strings.HasPrefix(row3, " ") {
+		t.Errorf("row3 should be centered (leading space for short text), got %q", row3)
+	}
+	if !strings.HasSuffix(strings.TrimRight(row3, " "), "HI") {
+		t.Errorf("row3 should contain HI centered, got %q", row3)
+	}
+}
+

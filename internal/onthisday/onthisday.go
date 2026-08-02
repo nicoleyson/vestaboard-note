@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/nicoleyson/vestaboard-note/internal/layout"
@@ -64,7 +65,7 @@ func Fetch(t time.Time) ([3]string, error) {
 
 	row3 := ""
 	if len(wrapped) > 0 {
-		row3 = wrapped[0]
+		row3 = layout.Center(strings.TrimSpace(wrapped[0]), layout.Cols)
 	}
 
 	return [3]string{
