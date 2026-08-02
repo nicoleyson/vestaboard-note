@@ -24,7 +24,7 @@ func TestPickBest_picksHighestElevation(t *testing.T) {
 	sats := []satellite{
 		{Name: "GPS-1", Category: "GPS", ElevationDeg: 40},
 		{Name: "GPS-2", Category: "GPS", ElevationDeg: 75},
-		{Name: "ISS", Category: "OTHER", ElevationDeg: 50},
+		{Name: "NOAA-19", Category: "OTHER", ElevationDeg: 50},
 	}
 	got := pickBest(sats)
 	if got == nil {
@@ -43,6 +43,17 @@ func TestPickBest_prefersInterestingOverHigherDebris(t *testing.T) {
 	got := pickBest(sats)
 	if got == nil || got.Name != "ISS" {
 		t.Errorf("want ISS, got %v", got)
+	}
+}
+
+func TestPickBest_stationsCategory(t *testing.T) {
+	sats := []satellite{
+		{Name: "ISS (ZARYA)", Category: "STATIONS", ElevationDeg: 45},
+		{Name: "DEBRIS-1", Category: "DEBRIS", ElevationDeg: 80},
+	}
+	got := pickBest(sats)
+	if got == nil || got.Name != "ISS (ZARYA)" {
+		t.Errorf("want ISS (ZARYA), got %v", got)
 	}
 }
 
@@ -79,6 +90,7 @@ func TestColorForCategory(t *testing.T) {
 	}{
 		{"GPS", 66},
 		{"IRIDIUM", 67},
+		{"STATIONS", 68},
 		{"OTHER", 68},
 		{"WEATHER", 68},
 		{"", 68},
