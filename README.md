@@ -60,6 +60,7 @@ Reload your shell after adding.
 | `rain` | Precipitation probability and intensity (none/light/moderate/heavy) with color row | Point in time (hourly model) | `lat`, `lon` |
 | `season` | Current astronomical season with color row and phase label | Calculated from equinox/solstice math | — |
 | `holiday` | Today's public holiday by location via Nager.Date (200+ countries) | Real data | `lat`, `lon` |
+| `satellites` | Notable satellite currently overhead (ISS, GPS, Iridium) with elevation and direction | Real-time from Satlas | `lat`, `lon` |
 | `status` | Preview all subcommands without sending to the board | — | — |
 
 ## Recommended crontab
@@ -78,6 +79,7 @@ VESTABOARD_DIR=/Users/yourname/repos/nicoleyson/vestaboard-note
 5 8 * * * cd $VESTABOARD_DIR && ./note onthisday
 10 8 * * * cd $VESTABOARD_DIR && ./note countdown
 15 8 * * * cd $VESTABOARD_DIR && ./note holiday --skip-trivial
+25 9 * * * cd $VESTABOARD_DIR && ./note satellites --skip-trivial
 
 # ── Throughout the day ───────────────────────────────────────────
 # Weather every 30 minutes
