@@ -153,7 +153,7 @@ const bashCompletion = `_note_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
     local cmds="weather clock calendar moon air flights onthisday countdown discogs pattern sunrise sunscene pollen uv rain season holiday satellites tearoff status completion"
-    local patterns="random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow"
+    local patterns="current random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow"
     if [[ "${prev}" == "pattern" ]]; then
         COMPREPLY=($(compgen -W "${patterns}" -- "${cur}"))
     elif [[ "${prev}" == "completion" ]]; then
@@ -191,6 +191,7 @@ _note() {
         'completion:print shell completion script'
     )
     patterns=(
+        'current:seasonal and holiday-aware pattern based on location'
         'random:pick a random pattern'
         'stripes:vertical color bands'
         'checker:checkerboard of two colors'
@@ -235,7 +236,7 @@ complete -c note -n __fish_use_subcommand -a satellites -d 'Notable satellites c
 complete -c note -n __fish_use_subcommand -a tearoff    -d 'Tear-off calendar showing today'"'"'s date'
 complete -c note -n __fish_use_subcommand -a status     -d 'Preview all subcommands without sending'
 complete -c note -n __fish_use_subcommand -a completion -d 'Print shell completion script'
-complete -c note -n '__fish_seen_subcommand_from pattern' -a 'random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow'
+complete -c note -n '__fish_seen_subcommand_from pattern' -a 'current random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow'
 complete -c note -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish'`
 
 func main() {
@@ -339,9 +340,16 @@ func main() {
 		if len(os.Args) >= 3 {
 			name = os.Args[2]
 		}
-		if name == "random" {
+		switch name {
+		case "random":
 			lines = pattern.Random()
-		} else {
+		case "current":
+			if cfg.Lat == 0 || cfg.Lon == 0 {
+				fmt.Fprintf(os.Stderr, "error: lat and lon required for pattern current\n")
+				os.Exit(1)
+			}
+			lines, err = pattern.Current(cfg.Lat, cfg.Lon)
+		default:
 			lines, err = pattern.Generate(name)
 		}
 	case "sunrise":

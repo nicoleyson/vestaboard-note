@@ -53,7 +53,7 @@ Reload your shell after adding.
 | `onthisday` | A historical event from today's date | Today's date | — |
 | `countdown` | Days until a configured event | Point in time | `countdowns` |
 | `discogs` | A record from your collection matched to weather + time of day | Point in time | `discogs_username`, `discogs_token`, `lat`, `lon` |
-| `pattern` | Random color art — stripes, checker, hearts, confetti, and more | — | — |
+| `pattern` | Color art — stripes, checker, hearts, confetti, and more. Use `pattern current` for seasonal/holiday-aware palette | — | — |
 | `sunrise` | Next sunrise or sunset time with color row | Calculated astronomical time | `lat`, `lon` |
 | `sunscene` | Visual color art scene — sunrise (cool sky, warm burst) or sunset (warm sky, deep afterglow) | Calculated astronomical time | `lat`, `lon` |
 | `pollen` | Pollen level and dominant type (grass/tree/weed) with color row | Point in time (hourly model) | `lat`, `lon` |
