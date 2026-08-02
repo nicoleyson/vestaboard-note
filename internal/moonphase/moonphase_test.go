@@ -1,7 +1,7 @@
 package moonphase
 
 import (
-	"strings"
+	"regexp"
 	"testing"
 	"time"
 )
@@ -87,28 +87,8 @@ func TestPhaseName(t *testing.T) {
 
 // countTiles counts logical display tiles in an encoded line.
 // {N} sequences count as 1; each other rune counts as 1.
+var tileRe = regexp.MustCompile(`\{\d+\}|.`)
+
 func countTiles(s string) int {
-	count := 0
-	for len(s) > 0 {
-		if s[0] == '{' {
-			end := strings.IndexByte(s, '}')
-			if end > 0 {
-				s = s[end+1:]
-				count++
-				continue
-			}
-		}
-		// consume one rune
-		for i, _ := range s {
-			if i > 0 {
-				s = s[i:]
-				break
-			}
-			if i == 0 && len(s) == 1 {
-				s = ""
-			}
-		}
-		count++
-	}
-	return count
+	return len(tileRe.FindAllString(s, -1))
 }
