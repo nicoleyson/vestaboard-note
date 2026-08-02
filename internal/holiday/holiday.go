@@ -88,7 +88,7 @@ func findNext(holidays []nagerHoliday, after string) (name string, days int) {
 			if err != nil {
 				continue
 			}
-			return h.Name, int(d.Sub(a).Hours()/24) + 1
+			return h.Name, int(d.Sub(a).Hours() / 24)
 		}
 	}
 	return "", 0
@@ -105,6 +105,9 @@ func artStrip(name string) string {
 	rules := []rule{
 		// Christmas: red/green alternating
 		{"CHRISTMAS", "{63}{66}{63}{66}{63}{66}{63}{66}{63}{66}{63}{66}{63}{66}{63}"},
+		// Lunar New Year / Chinese New Year: red/gold(yellow) — must precede NEW YEAR
+		{"LUNAR NEW YEAR", "{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}"},
+		{"CHINESE NEW YEAR", "{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}"},
 		// New Year: violet/yellow sparkle
 		{"NEW YEAR", "{68}{65}{68}{65}{68}{65}{68}{65}{68}{65}{68}{65}{68}{65}{68}"},
 		// Halloween: orange/black
@@ -126,9 +129,6 @@ func artStrip(name string) string {
 		// Hanukkah: blue/white
 		{"HANUKKAH", "{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}"},
 		{"CHANUKAH", "{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}"},
-		// Lunar New Year / Chinese New Year: red/gold(yellow)
-		{"LUNAR NEW YEAR", "{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}"},
-		{"CHINESE NEW YEAR", "{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}{65}{63}"},
 		// Eid: green/white crescent palette
 		{"EID", "{66}{69}{66}{69}{66}{69}{66}{69}{66}{69}{66}{69}{66}{69}{66}"},
 		// Labor / Workers: blue/white
