@@ -25,19 +25,16 @@ func Format(events []Event, now time.Time) [3]string {
 	next := nearest(events, now)
 	days := int(math.Ceil(next.Date.Sub(now).Hours() / 24))
 
-	var row2, row3 string
+	row2 := layout.Center(next.Label, layout.Cols)
+	var row3 string
 	switch {
 	case days < 0:
-		row2 = layout.Center(next.Label, layout.Cols)
 		row3 = layout.Center(fmt.Sprintf("%d DAYS AGO", -days), layout.Cols)
 	case days == 0:
-		row2 = layout.Center(next.Label, layout.Cols)
 		row3 = layout.Center("TODAY", layout.Cols)
 	case days == 1:
-		row2 = layout.Center(next.Label, layout.Cols)
 		row3 = layout.Center("TOMORROW", layout.Cols)
 	default:
-		row2 = layout.Center(next.Label, layout.Cols)
 		row3 = layout.Center(fmt.Sprintf("IN %d DAYS", days), layout.Cols)
 	}
 
