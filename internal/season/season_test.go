@@ -1,9 +1,18 @@
 package season
 
 import (
+	"regexp"
 	"testing"
 	"time"
 )
+
+var placeholderRe = regexp.MustCompile(`\{[0-9]+\}`)
+
+// tileCount counts rendered tiles: each {N} placeholder is 1 tile, each other rune is 1 tile.
+func tileCount(s string) int {
+	rest := placeholderRe.ReplaceAllString(s, "X")
+	return len([]rune(rest))
+}
 
 func TestCurrentSpring(t *testing.T) {
 	d := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC)
@@ -48,7 +57,7 @@ func TestCurrentWinterDecember(t *testing.T) {
 	}
 }
 
-func TestFormatRowLengths(t *testing.T) {
+func TestFormatTileCount(t *testing.T) {
 	dates := []time.Time{
 		time.Date(2026, 3, 25, 0, 0, 0, 0, time.UTC),
 		time.Date(2026, 6, 25, 0, 0, 0, 0, time.UTC),
@@ -57,8 +66,11 @@ func TestFormatRowLengths(t *testing.T) {
 	}
 	for _, d := range dates {
 		lines := Format(d)
-		if lines[0] == "" || lines[1] == "" || lines[2] == "" {
-			t.Errorf("%v: got empty row: %v", d.Format("Jan 2"), lines)
+		for i, l := range lines {
+			n := tileCount(l)
+			if n != 15 {
+				t.Errorf("%v row %d: got %d tiles, want 15: %q", d.Format("Jan 2"), i, n, l)
+			}
 		}
 	}
 }

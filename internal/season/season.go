@@ -3,6 +3,7 @@ package season
 import (
 	"fmt"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/nicoleyson/vestaboard-note/internal/layout"
@@ -180,9 +181,17 @@ func Format(t time.Time) [3]string {
 	name := nameFor(s)
 	phase := phaseLabel(s, progress)
 
+	tile := fmt.Sprintf("{%d}", color)
+	inner := tile + name + tile
+	innerTiles := 2 + len([]rune(name))
+	total := layout.Cols - innerTiles
+	left := total / 2
+	right := total - left
+	row2 := strings.Repeat(" ", left) + inner + strings.Repeat(" ", right)
+
 	return [3]string{
 		layout.ColorRow(color),
-		layout.Center(fmt.Sprintf("{%d}%s{%d}", color, name, color), layout.Cols),
+		row2,
 		layout.Center(phase, layout.Cols),
 	}
 }
