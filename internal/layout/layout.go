@@ -27,15 +27,6 @@ func (g Grid) Lines() [Rows]string {
 	return lines
 }
 
-func (g Grid) FlatText() string {
-	lines := g.Lines()
-	parts := make([]string, Rows)
-	for i, l := range lines {
-		parts[i] = l
-	}
-	return strings.Join(parts, "\n")
-}
-
 func FromLines(lines ...string) Grid {
 	var g Grid
 	for r := 0; r < Rows && r < len(lines); r++ {
