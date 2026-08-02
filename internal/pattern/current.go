@@ -40,6 +40,31 @@ var holidayThemes = []struct {
 	{"ANZAC", theme{[]int{cRed, cWhite}, []string{"stripes", "bars", "checker"}}},
 	{"REMEMBRANCE", theme{[]int{cRed, cWhite}, []string{"stripes", "bars", "checker"}}},
 	{"GUY FAWKES", theme{[]int{cOrange, cBlack}, []string{"checker", "diagonal", "stripes"}}},
+	{"MIDSUMMER", theme{[]int{cYellow, cGreen, cWhite}, []string{"stripes", "fade", "bars"}}},
+	{"MIDSOMMAR", theme{[]int{cYellow, cGreen, cWhite}, []string{"stripes", "fade", "bars"}}},
+	{"HOLI", theme{[]int{cRed, cYellow, cGreen, cBlue, cViolet}, []string{"confetti", "rainbow", "stripes"}}},
+	{"NOWRUZ", theme{[]int{cGreen, cWhite}, []string{"stripes", "fade", "bars"}}},
+	{"VESAK", theme{[]int{cOrange, cWhite}, []string{"stripes", "bars", "fade"}}},
+	{"WESAK", theme{[]int{cOrange, cWhite}, []string{"stripes", "bars", "fade"}}},
+	{"BUDDHA", theme{[]int{cOrange, cWhite}, []string{"stripes", "bars", "fade"}}},
+	{"CARNIVAL", theme{[]int{cViolet, cYellow, cGreen}, []string{"confetti", "rainbow", "diagonal"}}},
+	{"MARDI GRAS", theme{[]int{cViolet, cYellow, cGreen}, []string{"confetti", "rainbow", "diagonal"}}},
+	{"JUNETEENTH", theme{[]int{cRed, cBlack, cGreen}, []string{"stripes", "bars", "checker"}}},
+	{"KWANZAA", theme{[]int{cRed, cBlack, cGreen}, []string{"stripes", "bars", "checker"}}},
+	{"SONGKRAN", theme{[]int{cBlue, cWhite}, []string{"stripes", "checker", "fade"}}},
+	{"CHUSEOK", theme{[]int{cOrange, cYellow}, []string{"fade", "stripes", "bars"}}},
+	{"OKTOBERFEST", theme{[]int{cBlue, cWhite}, []string{"checker", "stripes", "bars"}}},
+	{"RAMADAN", theme{[]int{cGreen, cWhite, cYellow}, []string{"stripes", "fade", "bars"}}},
+	{"DAY OF THE DEAD", theme{[]int{cOrange, cViolet, cYellow}, []string{"confetti", "sparkle", "checker"}}},
+	{"DIA DE", theme{[]int{cOrange, cViolet, cYellow}, []string{"confetti", "sparkle", "checker"}}},
+	{"CHILDREN", theme{[]int{cRed, cYellow, cGreen, cBlue}, []string{"confetti", "rainbow", "stripes"}}},
+	{"ONAM", theme{[]int{cYellow, cGreen, cWhite}, []string{"stripes", "fade", "bars"}}},
+	{"AUSTRALIA", theme{[]int{cGreen, cYellow}, []string{"stripes", "checker", "bars"}}},
+	{"CANADA", theme{[]int{cRed, cWhite}, []string{"stripes", "bars", "checker"}}},
+	{"LIBERATION", theme{[]int{cRed, cWhite}, []string{"stripes", "bars"}}},
+	{"REPUBLIC", theme{[]int{cOrange, cWhite, cGreen}, []string{"stripes", "bars", "diagonal"}}},
+	{"MOTHER", theme{[]int{cRed, cHeart, cWhite}, []string{"hearts", "stripes", "fade"}}},
+	{"FATHER", theme{[]int{cBlue, cWhite}, []string{"stripes", "bars", "checker"}}},
 }
 
 var seasonThemes = map[season.Season][]theme{
@@ -100,6 +125,10 @@ func renderWithTheme(t theme) [3]string {
 		g = confettiP(pal)
 	case "sparkle":
 		g = sparkleP(pal)
+	case "rainbow":
+		g = rainbowP(pal)
+	case "pulse":
+		g = pulseP(pal)
 	default:
 		g = stripes()
 	}
@@ -225,6 +254,30 @@ func sparkleP(pal []int) grid {
 			placed++
 		}
 		attempts++
+	}
+	return g
+}
+
+// rainbowP cycles through the palette left-to-right in stripes of width 3.
+func rainbowP(pal []int) grid {
+	var g grid
+	offset := rand.Intn(len(pal))
+	for r := 0; r < rows; r++ {
+		for c := 0; c < cols; c++ {
+			g[r][c] = pal[(c/3+offset)%len(pal)]
+		}
+	}
+	return g
+}
+
+func pulseP(pal []int) grid {
+	var g grid
+	for r := 0; r < rows; r++ {
+		for c := 0; c < cols; c++ {
+			dist := abs(c - cols/2)
+			ring := dist / 3
+			g[r][c] = pal[ring%len(pal)]
+		}
 	}
 	return g
 }
