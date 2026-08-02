@@ -78,17 +78,17 @@ func findToday(holidays []nagerHoliday, today string) string {
 }
 
 func findNext(holidays []nagerHoliday, after string) (name string, days int) {
+	afterTime, err := time.Parse("2006-01-02", after)
+	if err != nil {
+		return "", 0
+	}
 	for _, h := range holidays {
 		if h.Date > after {
 			d, err := time.Parse("2006-01-02", h.Date)
 			if err != nil {
 				continue
 			}
-			a, err := time.Parse("2006-01-02", after)
-			if err != nil {
-				continue
-			}
-			return h.Name, int(d.Sub(a).Hours() / 24)
+			return h.Name, int(d.Sub(afterTime).Hours() / 24)
 		}
 	}
 	return "", 0

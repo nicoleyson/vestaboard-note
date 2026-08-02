@@ -139,7 +139,7 @@ func StripEmoji(s string) string {
 	for _, r := range s {
 		if unicode.Is(unicode.So, r) || unicode.Is(unicode.Sm, r) ||
 			(r >= 0xFE00 && r <= 0xFE1F) ||
-			(r > 0x1F000 && r <= 0x1FFFF) ||
+			(r >= 0x1F000 && r <= 0x1FFFF) ||
 			(r >= 0x1F300 && r <= 0x1FAFF) ||
 			(r >= 0x2600 && r <= 0x27BF) {
 			continue
