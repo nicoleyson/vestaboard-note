@@ -29,4 +29,6 @@ VESTABOARD_LOG={{VESTABOARD_DIR}}/vestaboard.log
 0 22 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') season" >> $VESTABOARD_LOG && {{NOTE_BIN}} season >> $VESTABOARD_LOG 2>&1
 
 # ── Overnight ────────────────────────────────────────────────────
+# 11pm: show today's date. Midnight: flip to tomorrow's date.
 0 23 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') tearoff" >> $VESTABOARD_LOG && {{NOTE_BIN}} tearoff >> $VESTABOARD_LOG 2>&1
+0  0 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') tearoff" >> $VESTABOARD_LOG && {{NOTE_BIN}} tearoff >> $VESTABOARD_LOG 2>&1
