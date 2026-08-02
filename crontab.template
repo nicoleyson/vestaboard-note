@@ -14,13 +14,13 @@ VESTABOARD_DIR={{VESTABOARD_DIR}}
 5 11  * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} rain --skip-trivial
 5 12  * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} uv
 5 13  * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} onthisday
-5 14  * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} countdown
+5 14  * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} season
 5 15  * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} holiday --skip-trivial
 5 16  * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} air --skip-trivial
 5 17  * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} suntime
 5 18  * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} satellites --skip-trivial
 5 19  * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} pollen --skip-trivial
-5 20  * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} countdown
+5 20  * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} holiday --skip-trivial
 5 21  * * * {{USER}}cd $VESTABOARD_DIR && {{NOTE_BIN}} moonphase
 
 # ── Screensaver ──────────────────────────────────────────────────
