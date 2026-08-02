@@ -82,7 +82,8 @@ VESTABOARD_DIR=/Users/yourname/repos/nicoleyson/vestaboard-note
 25 9 * * * cd $VESTABOARD_DIR && ./note satellites --skip-trivial
 
 # ── Throughout the day ───────────────────────────────────────────
-# Weather every 30 minutes
+# Weather every 30 minutes — the backbone. Board always returns to weather
+# within 30 minutes after any one-shot subcommand above.
 */30 * * * * cd $VESTABOARD_DIR && ./note weather
 
 # Calendar at the top of every hour
