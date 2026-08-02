@@ -150,6 +150,58 @@ func artStrip(name string) string {
 		{"ANZAC", "{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}"},
 		{"REMEMBRANCE", "{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}"},
 		{"ARMISTICE", "{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}"},
+		// Midsummer / Midsommar (Scandinavia): yellow/green/white
+		{"MIDSUMMER", "{65}{66}{69}{65}{66}{69}{65}{66}{69}{65}{66}{69}{65}{66}{69}"},
+		{"MIDSOMMAR", "{65}{66}{69}{65}{66}{69}{65}{66}{69}{65}{66}{69}{65}{66}{69}"},
+		// Holi (India): festival of colors — rainbow
+		{"HOLI", "{63}{65}{66}{67}{68}{65}{63}{65}{66}{67}{68}{65}{63}{65}{66}"},
+		// Nowruz (Persian New Year): green/white (spring)
+		{"NOWRUZ", "{66}{69}{66}{69}{66}{69}{66}{69}{66}{69}{66}{69}{66}{69}{66}"},
+		// Wesak / Vesak / Buddha Purnima: saffron/white
+		{"VESAK", "{64}{69}{64}{69}{64}{69}{64}{69}{64}{69}{64}{69}{64}{69}{64}"},
+		{"WESAK", "{64}{69}{64}{69}{64}{69}{64}{69}{64}{69}{64}{69}{64}{69}{64}"},
+		{"BUDDHA", "{64}{69}{64}{69}{64}{69}{64}{69}{64}{69}{64}{69}{64}{69}{64}"},
+		// Carnival / Mardi Gras: purple/gold/green
+		{"CARNIVAL", "{68}{65}{66}{68}{65}{66}{68}{65}{66}{68}{65}{66}{68}{65}{66}"},
+		{"MARDI GRAS", "{68}{65}{66}{68}{65}{66}{68}{65}{66}{68}{65}{66}{68}{65}{66}"},
+		// Bonfire Night (UK): orange/red/black
+		{"BONFIRE", "{64}{63}{70}{64}{63}{70}{64}{63}{70}{64}{63}{70}{64}{63}{70}"},
+		// Liberation Day / Freedom Day (various): red/white
+		{"LIBERATION", "{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}"},
+		{"FREEDOM", "{63}{69}{67}{63}{69}{67}{63}{69}{67}{63}{69}{67}{63}{69}{67}"},
+		// Constitution Day (various): blue/white/red
+		{"CONSTITUTION", "{67}{69}{63}{67}{69}{63}{67}{69}{63}{67}{69}{63}{67}{69}{63}"},
+		// Republic Day (India / others): saffron/white/green
+		{"REPUBLIC", "{64}{69}{66}{64}{69}{66}{64}{69}{66}{64}{69}{66}{64}{69}{66}"},
+		// Mother's Day / Father's Day: pink/white hearts
+		{"MOTHER", "{63}{62}{69}{63}{62}{69}{63}{62}{69}{63}{62}{69}{63}{62}{69}"},
+		{"FATHER", "{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}"},
+		// Children's Day: rainbow
+		{"CHILDREN", "{63}{65}{66}{67}{68}{65}{63}{65}{66}{67}{68}{65}{63}{65}{66}"},
+		// Juneteenth: red/black/green (Pan-African)
+		{"JUNETEENTH", "{63}{70}{66}{63}{70}{66}{63}{70}{66}{63}{70}{66}{63}{70}{66}"},
+		// Kwanzaa: red/black/green
+		{"KWANZAA", "{63}{70}{66}{63}{70}{66}{63}{70}{66}{63}{70}{66}{63}{70}{66}"},
+		// Onam (Kerala harvest festival): yellow/green/white
+		{"ONAM", "{65}{66}{69}{65}{66}{69}{65}{66}{69}{65}{66}{69}{65}{66}{69}"},
+		// Songkran (Thai New Year / water festival): blue/white
+		{"SONGKRAN", "{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}"},
+		// Chuseok /추석 (Korean harvest): orange/yellow
+		{"CHUSEOK", "{64}{65}{64}{65}{64}{65}{64}{65}{64}{65}{64}{65}{64}{65}{64}"},
+		// Oktoberfest: blue/white (Bavaria)
+		{"OKTOBERFEST", "{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}{69}{67}"},
+		// Ramadan: green/white/gold crescent
+		{"RAMADAN", "{66}{69}{65}{66}{69}{65}{66}{69}{65}{66}{69}{65}{66}{69}{65}"},
+		// Day of the Dead / Dia de Muertos: orange/violet/yellow
+		{"DAY OF THE DEAD", "{64}{68}{65}{64}{68}{65}{64}{68}{65}{64}{68}{65}{64}{68}{65}"},
+		{"DIA DE", "{64}{68}{65}{64}{68}{65}{64}{68}{65}{64}{68}{65}{64}{68}{65}"},
+		// Noche Buena / Christmas Eve (Latin America): red/green
+		{"NOCHE BUENA", "{63}{66}{63}{66}{63}{66}{63}{66}{63}{66}{63}{66}{63}{66}{63}"},
+		{"NOCHEBUENA", "{63}{66}{63}{66}{63}{66}{63}{66}{63}{66}{63}{66}{63}{66}{63}"},
+		// Australia Day: green/gold
+		{"AUSTRALIA", "{66}{65}{66}{65}{66}{65}{66}{65}{66}{65}{66}{65}{66}{65}{66}"},
+		// Canada Day: red/white
+		{"CANADA", "{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}{69}{63}"},
 	}
 
 	for _, r := range rules {
@@ -225,6 +277,8 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 
 	var row3 string
 	switch days {
+	case 0:
+		row3 = layout.Center("TODAY", layout.Cols)
 	case 1:
 		row3 = layout.Center("TOMORROW", layout.Cols)
 	default:

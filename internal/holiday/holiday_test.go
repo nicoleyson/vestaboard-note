@@ -64,6 +64,13 @@ func TestFindNext_noRemaining(t *testing.T) {
 	}
 }
 
+func TestFindNext_afterLastHolidayReturnsEmpty(t *testing.T) {
+	name, days := findNext(testHolidays, "2026-12-26")
+	if name != "" || days != 0 {
+		t.Errorf("expected empty after last holiday of year, got (%q, %d)", name, days)
+	}
+}
+
 func TestArtStrip_knownHolidays(t *testing.T) {
 	cases := []struct {
 		input   string
