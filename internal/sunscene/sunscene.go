@@ -74,12 +74,21 @@ func sunRow(progress float64) int {
 
 func rowColor(r, sr int, progress float64) int {
 	switch {
-	case progress < 0.10 || progress > 0.90:
+	case progress < 0.05 || progress > 0.97:
 		if r == sr {
 			return red
 		}
 		return black
-	case progress < 0.20 || progress > 0.80:
+	case progress < 0.15 || progress > 0.85:
+		switch r {
+		case 0:
+			return black
+		case 1:
+			return violet
+		default:
+			return red
+		}
+	case progress < 0.25 || progress > 0.75:
 		switch r {
 		case 0:
 			return violet
