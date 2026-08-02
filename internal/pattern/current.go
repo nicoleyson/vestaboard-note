@@ -1,76 +1,13 @@
 package pattern
 
 import (
-	"encoding/json"
-	"fmt"
 	"math/rand"
-	"net/http"
 	"strings"
 	"time"
 
+	"github.com/nicoleyson/vestaboard-note/internal/holiday"
 	"github.com/nicoleyson/vestaboard-note/internal/season"
 )
-
-const currentUserAgent = "vestaboard-note/1.0 (https://github.com/nicoleyson/vestaboard-note)"
-
-type currentNominatimResp struct {
-	Address struct {
-		CountryCode string `json:"country_code"`
-	} `json:"address"`
-}
-
-type currentNagerHoliday struct {
-	Date string `json:"date"`
-	Name string `json:"localName"`
-}
-
-func currentGetJSON(url string, target interface{}) error {
-	client := &http.Client{Timeout: 10 * time.Second}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return err
-	}
-	req.Header.Set("User-Agent", currentUserAgent)
-	req.Header.Set("Accept", "application/json")
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("HTTP %d", resp.StatusCode)
-	}
-	return json.NewDecoder(resp.Body).Decode(target)
-}
-
-func currentCountryCode(lat, lon float64) string {
-	url := fmt.Sprintf("https://nominatim.openstreetmap.org/reverse?lat=%f&lon=%f&format=json&zoom=3", lat, lon)
-	var resp currentNominatimResp
-	if err := currentGetJSON(url, &resp); err != nil {
-		return ""
-	}
-	return strings.ToUpper(resp.Address.CountryCode)
-}
-
-func todaysHoliday(lat, lon float64) string {
-	code := currentCountryCode(lat, lon)
-	if code == "" {
-		return ""
-	}
-	today := time.Now().Format("2006-01-02")
-	year := time.Now().Year()
-	url := fmt.Sprintf("https://date.nager.at/api/v3/PublicHolidays/%d/%s", year, code)
-	var holidays []currentNagerHoliday
-	if err := currentGetJSON(url, &holidays); err != nil {
-		return ""
-	}
-	for _, h := range holidays {
-		if h.Date == today {
-			return strings.ToUpper(h.Name)
-		}
-	}
-	return ""
-}
 
 type theme struct {
 	palette  []int
@@ -170,10 +107,10 @@ func renderWithTheme(t theme) [3]string {
 }
 
 func Current(lat, lon float64) ([3]string, error) {
-	holiday := todaysHoliday(lat, lon)
-	if holiday != "" {
+	name := holiday.TodaysName(lat, lon)
+	if name != "" {
 		for _, ht := range holidayThemes {
-			if strings.Contains(holiday, ht.keyword) {
+			if strings.Contains(name, ht.keyword) {
 				return renderWithTheme(ht.t), nil
 			}
 		}

@@ -161,6 +161,18 @@ func artStrip(name string) string {
 	return layout.ColorRow(65)
 }
 
+func TodaysName(lat, lon float64) string {
+	code, err := countryCode(lat, lon)
+	if err != nil {
+		return ""
+	}
+	holidays, err := fetchHolidays(code, time.Now().Year())
+	if err != nil {
+		return ""
+	}
+	return strings.ToUpper(findToday(holidays, time.Now().Format("2006-01-02")))
+}
+
 func Fetch(lat, lon float64) ([3]string, bool, error) {
 	now := time.Now()
 	today := now.Format("2006-01-02")
