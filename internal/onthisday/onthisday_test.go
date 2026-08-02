@@ -1,11 +1,58 @@
 package onthisday
 
 import (
+	"net/http"
 	"testing"
 	"time"
+
+	"github.com/nicoleyson/vestaboard-note/internal/layout"
 )
 
+func TestPickEvent_prefersCleanFit(t *testing.T) {
+	short := wikiEvent{Year: 1900, Text: "Hi"}
+	exact := wikiEvent{Year: 1961, Text: "U.S. DEFENSE DEPT CREATES DARPA RESEARCH"}
+	events := []wikiEvent{short, exact}
+
+	got := pickEvent(events)
+	wrapped := layout.Wrap(layout.StripEmoji(got.Text), layout.Cols)
+	if len(wrapped) == 0 {
+		t.Fatal("pickEvent returned event with no wrapped lines")
+	}
+	if len([]rune(wrapped[0])) != layout.Cols {
+		t.Errorf("preferred event first line len = %d, want %d: %q", len([]rune(wrapped[0])), layout.Cols, wrapped[0])
+	}
+}
+
+func TestPickEvent_fallsBackToAny(t *testing.T) {
+	events := []wikiEvent{
+		{Year: 1900, Text: "Hi"},
+		{Year: 1901, Text: "OK"},
+	}
+	got := pickEvent(events)
+	if got.Year != 1900 && got.Year != 1901 {
+		t.Errorf("pickEvent fallback returned unexpected year %d", got.Year)
+	}
+}
+
+func TestEndsWithTilde(t *testing.T) {
+	if !endsWithTilde("hello~") {
+		t.Error("expected true for string ending with tilde")
+	}
+	if endsWithTilde("hello") {
+		t.Error("expected false for string not ending with tilde")
+	}
+	if endsWithTilde("") {
+		t.Error("expected false for empty string")
+	}
+}
+
 func TestFetch_live(t *testing.T) {
+	resp, err := http.Get("https://en.wikipedia.org")
+	if err != nil || resp.StatusCode != 200 {
+		t.Skip("no network access, skipping live test")
+	}
+	resp.Body.Close()
+
 	lines, err := Fetch(time.Now())
 	if err != nil {
 		t.Fatalf("Fetch failed: %v", err)
@@ -15,7 +62,4 @@ func TestFetch_live(t *testing.T) {
 			t.Errorf("row %d: got len %d, want 15: %q", i+1, len([]rune(l)), l)
 		}
 	}
-	t.Logf("Row1: %s", lines[0])
-	t.Logf("Row2: %s", lines[1])
-	t.Logf("Row3: %s", lines[2])
 }
