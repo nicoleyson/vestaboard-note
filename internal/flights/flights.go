@@ -28,7 +28,12 @@ func Fetch(lat, lon float64) ([3]string, error) {
 		apiURL, lat-delta, lon-delta, lat+delta, lon+delta)
 
 	client := &http.Client{Timeout: 15 * time.Second}
-	resp, err := client.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return [3]string{}, err
+	}
+	req.Header.Set("User-Agent", "vestaboard-note/1.0 (https://github.com/nicoleyson/vestaboard-note)")
+	resp, err := client.Do(req)
 	if err != nil {
 		return [3]string{}, err
 	}
