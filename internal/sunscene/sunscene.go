@@ -1,11 +1,11 @@
 package sunscene
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
+
+	"github.com/nicoleyson/vestaboard-note/internal/sunapi"
 )
 
 const (
@@ -22,46 +22,6 @@ const (
 	white  = 69
 	black  = 70
 )
-
-type apiResponse struct {
-	Results struct {
-		Sunrise string `json:"sunrise"`
-		Sunset  string `json:"sunset"`
-	} `json:"results"`
-	Status string `json:"status"`
-}
-
-func fetchTimes(lat, lon float64, date time.Time) (rise, set time.Time, err error) {
-	url := fmt.Sprintf("https://api.sunrise-sunset.org/json?lat=%f&lng=%f&date=%s&formatted=0",
-		lat, lon, date.Local().Format("2006-01-02"))
-	req, err := http.NewRequest(http.MethodGet, url, nil)
-	if err != nil {
-		return time.Time{}, time.Time{}, err
-	}
-	req.Header.Set("User-Agent", "vestaboard-note/1.0 (https://github.com/nicoleyson/vestaboard-note)")
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return time.Time{}, time.Time{}, err
-	}
-	defer resp.Body.Close()
-	var data apiResponse
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return time.Time{}, time.Time{}, err
-	}
-	if data.Status != "OK" {
-		return time.Time{}, time.Time{}, fmt.Errorf("sunrise API: %s", data.Status)
-	}
-	rise, err = time.Parse(time.RFC3339, data.Results.Sunrise)
-	if err != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf("parse sunrise: %w", err)
-	}
-	set, err = time.Parse(time.RFC3339, data.Results.Sunset)
-	if err != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf("parse sunset: %w", err)
-	}
-	return rise, set, nil
-}
 
 // sunRow maps 0–1 daylight progress to a board row (0=top, 2=bottom).
 // The sun sits at the bottom near dawn/dusk, rises to mid-sky through the
@@ -84,15 +44,6 @@ func rowColor(r, sr int, progress float64) int {
 			return red
 		}
 		return black
-	case progress < 0.15 || progress > 0.85:
-		switch r {
-		case 0:
-			return violet
-		case 1:
-			return orange
-		default:
-			return red
-		}
 	case progress < 0.25 || progress > 0.75:
 		switch r {
 		case 0:
@@ -188,7 +139,7 @@ func toLines(g [rows][cols]int) [3]string {
 
 func Fetch(lat, lon float64) ([3]string, error) {
 	now := time.Now()
-	rise, set, err := fetchTimes(lat, lon, now)
+	rise, set, err := sunapi.FetchTimes(lat, lon, now)
 	if err != nil {
 		return [3]string{}, err
 	}
@@ -202,7 +153,7 @@ func Fetch(lat, lon float64) ([3]string, error) {
 	var nightStart, nextRise time.Time
 	if now.Before(rise) {
 		yesterday := now.AddDate(0, 0, -1)
-		_, nightStart, err = fetchTimes(lat, lon, yesterday)
+		_, nightStart, err = sunapi.FetchTimes(lat, lon, yesterday)
 		if err != nil {
 			return renderNight(0.5), nil
 		}
@@ -210,13 +161,16 @@ func Fetch(lat, lon float64) ([3]string, error) {
 	} else {
 		nightStart = set
 		tomorrow := now.AddDate(0, 0, 1)
-		nextRise, _, err = fetchTimes(lat, lon, tomorrow)
+		nextRise, _, err = sunapi.FetchTimes(lat, lon, tomorrow)
 		if err != nil {
 			return renderNight(0.5), nil
 		}
 	}
 
 	nightLen := nextRise.Sub(nightStart).Seconds()
+	if nightLen <= 0 {
+		return renderNight(0.5), nil
+	}
 	elapsed := now.Sub(nightStart).Seconds()
 	progress := elapsed / nightLen
 	if progress < 0 {
