@@ -1,6 +1,9 @@
 package weather
 
 import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/nicoleyson/vestaboard-note/internal/geo"
@@ -94,3 +97,65 @@ func TestDist(t *testing.T) {
 		t.Errorf("dist of same point should be 0")
 	}
 }
+
+func TestFetch_stationsError(t *testing.T) {
+	stationsSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+	}))
+	defer stationsSrv.Close()
+
+	oldStations := metarStationsURL
+	metarStationsURL = stationsSrv.URL
+	defer func() { metarStationsURL = oldStations }()
+
+	_, err := Fetch(45.5, -122.6)
+	if err == nil {
+		t.Error("expected error when stations API returns 500")
+	}
+}
+
+func TestFetch_fullSuccess(t *testing.T) {
+	stationsSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode([]map[string]interface{}{
+			{"icaoId": "KPDX", "lat": 45.5, "lon": -122.6},
+		})
+	}))
+	defer stationsSrv.Close()
+
+	metarSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode([]map[string]interface{}{
+			{
+				"icaoId": "KPDX",
+				"temp":   15.0,
+				"cover":  "CLR",
+				"rawOb":  "KPDX 011234Z 10005KT CLR 15/10 A2992",
+			},
+		})
+	}))
+	defer metarSrv.Close()
+
+	oldStations := metarStationsURL
+	oldMetar := metarURL
+	metarStationsURL = stationsSrv.URL
+	metarURL = metarSrv.URL
+	defer func() {
+		metarStationsURL = oldStations
+		metarURL = oldMetar
+	}()
+
+	lines, err := Fetch(45.5, -122.6)
+	if err != nil {
+		t.Fatalf("Fetch error: %v", err)
+	}
+	if lines[0] == "" {
+		t.Error("row 0 (color row) should not be empty")
+	}
+	for i := 1; i < 3; i++ {
+		if len([]rune(lines[i])) != 15 {
+			t.Errorf("row %d len = %d, want 15: %q", i, len([]rune(lines[i])), lines[i])
+		}
+	}
+}
+

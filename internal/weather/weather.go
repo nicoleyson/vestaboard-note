@@ -13,11 +13,12 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/layout"
 )
 
-const (
+var (
 	metarStationsURL = "https://aviationweather.gov/api/data/airport"
 	metarURL         = "https://aviationweather.gov/api/data/metar"
-	metarSearchDelta = 2.0
 )
+
+const metarSearchDelta = 2.0
 
 func getJSON(ctx context.Context, url string, target interface{}) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)

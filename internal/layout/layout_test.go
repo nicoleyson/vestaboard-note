@@ -148,3 +148,24 @@ func TestFromLines(t *testing.T) {
 		}
 	}
 }
+
+func TestWrap_longWordSplit(t *testing.T) {
+	word := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	lines := Wrap(word, 15)
+	if len(lines) == 0 {
+		t.Fatal("Wrap of long word returned no lines")
+	}
+	for i, l := range lines {
+		if len([]rune(l)) != 15 {
+			t.Errorf("Wrap long word: line %d len = %d, want 15: %q", i, len([]rune(l)), l)
+		}
+	}
+	combined := ""
+	for _, l := range lines {
+		combined += strings.TrimRight(l, " ")
+	}
+	if combined != word {
+		t.Errorf("Wrap long word: reassembled = %q, want %q", combined, word)
+	}
+}
+
