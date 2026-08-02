@@ -221,6 +221,13 @@ func main() {
 
 	cmd := os.Args[1]
 
+	skipTrivial := false
+	for _, arg := range os.Args[2:] {
+		if arg == "--skip-trivial" {
+			skipTrivial = true
+		}
+	}
+
 	if cmd == "completion" {
 		shell := "bash"
 		if len(os.Args) >= 3 {
@@ -348,7 +355,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if trivial {
+	if trivial && skipTrivial {
 		return
 	}
 

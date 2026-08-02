@@ -70,8 +70,8 @@ Times are in your system timezone. On macOS this matches your local time automat
 ```cron
 TZ=America/Los_Angeles
 
-# Rain, pollen, and air quality skip posting automatically when levels are trivial
-# (no precipitation chance, low pollen, good air quality) — no seasonal filtering needed.
+# Rain, pollen, and air quality skip posting when levels are trivial if --skip-trivial is passed.
+# Run manually without the flag to always send (good for testing).
 
 # ── Morning routine ──────────────────────────────────────────────
 5 8 * * * cd ~/repos/vestaboard-note && ./note onthisday
@@ -90,14 +90,14 @@ TZ=America/Los_Angeles
 # UV index during peak hours (offset to avoid collision)
 4 10-15 * * * cd ~/repos/vestaboard-note && ./note uv
 
-# Rain check every morning — silently skips when chance is negligible
-10 8 * * * cd ~/repos/vestaboard-note && ./note rain
+# Rain check every morning — skips when chance is negligible
+10 8 * * * cd ~/repos/vestaboard-note && ./note rain --skip-trivial
 
-# Air quality every hour — silently skips when air is good
-6 * * * * cd ~/repos/vestaboard-note && ./note air
+# Air quality every hour — skips when air is good
+6 * * * * cd ~/repos/vestaboard-note && ./note air --skip-trivial
 
-# Pollen every morning — silently skips when levels are low
-20 8 * * * cd ~/repos/vestaboard-note && ./note pollen
+# Pollen every morning — skips when levels are low
+20 8 * * * cd ~/repos/vestaboard-note && ./note pollen --skip-trivial
 
 # ── Evening ──────────────────────────────────────────────────────
 # Moon phase at 9pm — best appreciated at night
