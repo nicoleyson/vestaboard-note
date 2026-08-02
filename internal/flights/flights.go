@@ -11,7 +11,7 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/layout"
 )
 
-const apiURL = "https://opensky-network.org/api/states/all"
+var apiURL = "https://opensky-network.org/api/states/all"
 
 type apiResponse struct {
 	States [][]interface{} `json:"states"`
