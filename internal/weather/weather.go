@@ -165,7 +165,7 @@ func Fetch(lat, lon float64) ([3]string, error) {
 
 	return [3]string{
 		layout.ColorRow(color),
-		layout.Center(fmt.Sprintf("%.0f%s  %s", temp, unit, now.Format("Mon Jan 2")), layout.Cols),
+		layout.Center(fmt.Sprintf("%.0f%s %s", temp, unit, now.Format("1/2")), layout.Cols),
 		layout.Center(desc, layout.Cols),
 	}, nil
 }
