@@ -61,6 +61,7 @@ Reload your shell after adding.
 | `season` | Current astronomical season with color row and phase label | Calculated from equinox/solstice math | — |
 | `holiday` | Today's public holiday by location via Nager.Date (200+ countries) | Real data | `lat`, `lon` |
 | `satellites` | Notable satellite currently overhead (ISS, GPS, Iridium) with elevation and direction | Real-time from Satlas | `lat`, `lon` |
+| `tearoff` | Tear-off calendar showing today's date — red card with yellow tabs and white number | Point in time | — |
 | `status` | Preview all subcommands without sending to the board | — | — |
 
 ## Recommended crontab
@@ -109,7 +110,8 @@ VESTABOARD_DIR=/Users/yourname/repos/nicoleyson/vestaboard-note
 0 21 * * * cd $VESTABOARD_DIR && ./note moon
 
 # ── Screensaver ──────────────────────────────────────────────────
-0 0 * * * cd $VESTABOARD_DIR && ./note pattern
+# Tear-off calendar at midnight — stays up until weather reclaims the board at 8:30am
+0 0 * * * cd $VESTABOARD_DIR && ./note tearoff
 ```
 
 If you want the clock cycling constantly (good for a display you glance at all day), use a high-frequency setup instead:
