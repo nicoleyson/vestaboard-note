@@ -59,6 +59,7 @@ Reload your shell after adding.
 | `uv` | UV index with category color row (green→yellow→orange→red→violet) | Point in time (hourly model) | `lat`, `lon` |
 | `rain` | Precipitation probability and intensity (none/light/moderate/heavy) with color row | Point in time (hourly model) | `lat`, `lon` |
 | `season` | Current astronomical season with color row and phase label | Calculated from equinox/solstice math | — |
+| `holiday` | Today's public holiday by location via Nager.Date (200+ countries) | Real data | `lat`, `lon` |
 | `status` | Preview all subcommands without sending to the board | — | — |
 
 ## Recommended crontab
@@ -74,6 +75,7 @@ On macOS, `~` and `TZ=` are not reliably supported in crontab — use full absol
 # ── Morning routine ──────────────────────────────────────────────
 5 8 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note onthisday
 10 8 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note countdown
+15 8 * * * cd /Users/yourname/repos/nicoleyson/vestaboard-note && ./note holiday --skip-trivial
 
 # ── Throughout the day ───────────────────────────────────────────
 # Weather every 30 minutes
