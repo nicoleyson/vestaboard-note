@@ -59,19 +59,39 @@ func countryCode(lat, lon float64) (string, error) {
 	return code, nil
 }
 
-func todayHoliday(code string, now time.Time) (string, error) {
-	url := fmt.Sprintf("%s/%d/%s", nagerURL, now.Year(), code)
+func fetchHolidays(code string, year int) ([]nagerHoliday, error) {
+	url := fmt.Sprintf("%s/%d/%s", nagerURL, year, code)
 	var holidays []nagerHoliday
 	if err := getJSON(url, &holidays); err != nil {
-		return "", fmt.Errorf("fetch holidays: %w", err)
+		return nil, fmt.Errorf("fetch holidays: %w", err)
 	}
-	today := now.Format("2006-01-02")
+	return holidays, nil
+}
+
+func findToday(holidays []nagerHoliday, today string) string {
 	for _, h := range holidays {
 		if h.Date == today {
-			return h.Name, nil
+			return h.Name
 		}
 	}
-	return "", nil
+	return ""
+}
+
+func findNext(holidays []nagerHoliday, after string) (name string, days int) {
+	for _, h := range holidays {
+		if h.Date > after {
+			d, err := time.Parse("2006-01-02", h.Date)
+			if err != nil {
+				continue
+			}
+			a, err := time.Parse("2006-01-02", after)
+			if err != nil {
+				continue
+			}
+			return h.Name, int(d.Sub(a).Hours()/24) + 1
+		}
+	}
+	return "", 0
 }
 
 func artStrip(name string) string {
@@ -143,40 +163,61 @@ func artStrip(name string) string {
 
 func Fetch(lat, lon float64) ([3]string, bool, error) {
 	now := time.Now()
+	today := now.Format("2006-01-02")
 
 	code, err := countryCode(lat, lon)
 	if err != nil {
 		return [3]string{}, false, err
 	}
 
-	name, err := todayHoliday(code, now)
+	holidays, err := fetchHolidays(code, now.Year())
 	if err != nil {
 		return [3]string{}, false, err
 	}
 
-	if name == "" {
+	if name := findToday(holidays, today); name != "" {
+		upper := strings.ToUpper(name)
+		lines := layout.Wrap(upper, layout.Cols)
+		row2, row3 := "", ""
+		if len(lines) > 0 {
+			row2 = layout.Center(lines[0], layout.Cols)
+		}
+		if len(lines) > 1 {
+			row3 = layout.Center(lines[1], layout.Cols)
+		}
+		return [3]string{artStrip(name), row2, row3}, false, nil
+	}
+
+	nextName, days := findNext(holidays, today)
+	if nextName == "" {
+		nextYear, err := fetchHolidays(code, now.Year()+1)
+		if err == nil {
+			nextName, days = findNext(nextYear, today)
+		}
+	}
+
+	if nextName == "" {
 		return [3]string{
 			layout.ColorRow(70),
-			layout.Center("NO HOLIDAY", layout.Cols),
-			layout.Center("TODAY", layout.Cols),
+			layout.Center("NO HOLIDAYS", layout.Cols),
+			layout.Center("FOUND", layout.Cols),
 		}, true, nil
 	}
 
-	upper := strings.ToUpper(name)
+	upper := strings.ToUpper(nextName)
 	lines := layout.Wrap(upper, layout.Cols)
-
 	row2 := ""
-	row3 := ""
 	if len(lines) > 0 {
 		row2 = layout.Center(lines[0], layout.Cols)
 	}
-	if len(lines) > 1 {
-		row3 = layout.Center(lines[1], layout.Cols)
+
+	var row3 string
+	switch days {
+	case 1:
+		row3 = layout.Center("TOMORROW", layout.Cols)
+	default:
+		row3 = layout.Center(fmt.Sprintf("IN %d DAYS", days), layout.Cols)
 	}
 
-	return [3]string{
-		artStrip(name),
-		row2,
-		row3,
-	}, false, nil
+	return [3]string{artStrip(nextName), row2, row3}, true, nil
 }
