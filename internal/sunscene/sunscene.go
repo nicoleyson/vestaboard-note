@@ -136,19 +136,29 @@ func renderDay(progress float64) [3]string {
 	return toLines(g)
 }
 
+// nightRowColor maps row index, moon row, and night progress to a sky color.
+// The moon row always gets violet so the white disc reads clearly against it.
+func nightRowColor(r, mr int, progress float64) int {
+	if r == mr {
+		return violet
+	}
+	if r < mr {
+		if progress < 0.20 || progress > 0.80 {
+			return violet
+		}
+		return black
+	}
+	return violet
+}
+
 func renderNight(progress float64) [3]string {
 	mr := sunRow(progress)
 
 	var g [rows][cols]int
 	for r := 0; r < rows; r++ {
-		for c := 0; c < cols; c++ {
-			if r < mr {
-				g[r][c] = black
-			} else if r == mr {
-				g[r][c] = violet
-			} else {
-				g[r][c] = black
-			}
+		c := nightRowColor(r, mr, progress)
+		for col := 0; col < cols; col++ {
+			g[r][col] = c
 		}
 	}
 
