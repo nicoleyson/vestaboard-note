@@ -18,30 +18,16 @@ const (
 	Winter
 )
 
-func colorFor(s Season) int {
-	switch s {
-	case Spring:
-		return 66
-	case Summer:
-		return 65
-	case Fall:
-		return 64
-	default:
-		return 69
-	}
+type seasonInfo struct {
+	color int
+	name  string
 }
 
-func nameFor(s Season) string {
-	switch s {
-	case Spring:
-		return "SPRING"
-	case Summer:
-		return "SUMMER"
-	case Fall:
-		return "FALL"
-	default:
-		return "WINTER"
-	}
+var seasonData = map[Season]seasonInfo{
+	Spring: {color: 66, name: "SPRING"},
+	Summer: {color: 65, name: "SUMMER"},
+	Fall:   {color: 64, name: "FALL"},
+	Winter: {color: 69, name: "WINTER"},
 }
 
 func phaseLabel(s Season, progress float64) string {
@@ -150,8 +136,9 @@ func Current(t time.Time) (Season, float64) {
 
 func Format(t time.Time) [3]string {
 	s, progress := Current(t)
-	color := colorFor(s)
-	name := nameFor(s)
+	info := seasonData[s]
+	color := info.color
+	name := info.name
 	phase := phaseLabel(s, progress)
 
 	tile := fmt.Sprintf("{%d}", color)
