@@ -47,7 +47,7 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 	trivial := label == "LOW"
 	return [3]string{
 		layout.ColorRow(color),
-		layout.Center(fmt.Sprintf("POLLEN  %s", label), layout.Cols),
+		layout.Center(fmt.Sprintf("POLLEN %s", label), layout.Cols),
 		layout.Center(dominant, layout.Cols),
 	}, trivial, nil
 }
@@ -71,6 +71,6 @@ func classify(val float64) (label string, color int) {
 	case val < 200:
 		return "HIGH", 64
 	default:
-		return "VERY HIGH", 63
+		return "V.HIGH", 63
 	}
 }

@@ -40,7 +40,7 @@ func Fetch(lat, lon float64) ([3]string, error) {
 
 	return [3]string{
 		layout.ColorRow(color),
-		layout.Center(fmt.Sprintf("UV INDEX  %.0f", idx), layout.Cols),
+		layout.Center(fmt.Sprintf("UV INDEX %.0f", idx), layout.Cols),
 		layout.Center(label, layout.Cols),
 	}, nil
 }

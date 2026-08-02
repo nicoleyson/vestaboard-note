@@ -16,8 +16,8 @@ func TestClassify(t *testing.T) {
 		{49.9, "MODERATE", 65},
 		{50, "HIGH", 64},
 		{199.9, "HIGH", 64},
-		{200, "VERY HIGH", 63},
-		{500, "VERY HIGH", 63},
+		{200, "V.HIGH", 63},
+		{500, "V.HIGH", 63},
 	}
 	for _, tt := range tests {
 		label, color := classify(tt.val)
