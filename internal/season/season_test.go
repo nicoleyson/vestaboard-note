@@ -75,12 +75,29 @@ func TestFormatTileCount(t *testing.T) {
 	}
 }
 
-func TestPhaseLabelCoverage(t *testing.T) {
+func TestProgressLabel_midSeason(t *testing.T) {
+	label := progressLabel(Fall, 0.44)
+	if label != "44% INTO FALL" {
+		t.Errorf("got %q, want %q", label, "44% INTO FALL")
+	}
+}
+
+func TestProgressLabel_lastDay(t *testing.T) {
+	label := progressLabel(Summer, 0.999)
+	if label != "LAST DAY" {
+		t.Errorf("got %q, want %q", label, "LAST DAY")
+	}
+}
+
+func TestProgressLabel_allSeasonsLessThan16(t *testing.T) {
 	seasons := []Season{Spring, Summer, Fall, Winter}
-	progs := []float64{0.05, 0.25, 0.50, 0.75, 0.92}
+	progs := []float64{0.01, 0.50, 0.98}
 	for _, s := range seasons {
 		for _, p := range progs {
-			label := phaseLabel(s, p)
+			label := progressLabel(s, p)
+			if len([]rune(label)) > 15 {
+				t.Errorf("season=%d progress=%.2f label %q is %d runes, want ≤15", s, p, label, len([]rune(label)))
+			}
 			if label == "" {
 				t.Errorf("season=%d progress=%.2f returned empty label", s, p)
 			}

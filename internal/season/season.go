@@ -3,7 +3,6 @@ package season
 import (
 	"fmt"
 	"math"
-	"strings"
 	"time"
 
 	"github.com/nicoleyson/vestaboard-note/internal/layout"
@@ -30,37 +29,16 @@ var seasonData = map[Season]seasonInfo{
 	Winter: {color: 69, name: "WINTER"},
 }
 
-func phaseLabel(s Season, progress float64) string {
-	switch {
-	case progress < 0.15:
-		return "IS HERE"
-	case progress < 0.40:
-		switch s {
-		case Spring:
-			return "IN BLOOM"
-		case Summer:
-			return "HEATING UP"
-		case Fall:
-			return "TURNING"
-		default:
-			return "SETTING IN"
-		}
-	case progress < 0.65:
-		return "IN FULL SWING"
-	case progress < 0.85:
-		return "WINDING DOWN"
-	default:
-		switch s {
-		case Spring:
-			return "ALMOST SUMMER"
-		case Summer:
-			return "ALMOST FALL"
-		case Fall:
-			return "ALMOST WINTER"
-		default:
-			return "ALMOST SPRING"
-		}
+func progressLabel(s Season, progress float64) string {
+	if progress >= 0.99 {
+		return "LAST DAY"
 	}
+	pct := int(math.Round(progress * 100))
+	if pct > 99 {
+		pct = 99
+	}
+	name := seasonData[s].name
+	return fmt.Sprintf("%d%% INTO %s", pct, name)
 }
 
 // solsticeEquinox returns the approximate Unix timestamp (days since J2000.0)
@@ -138,20 +116,11 @@ func Format(t time.Time) [3]string {
 	s, progress := Current(t)
 	info := seasonData[s]
 	color := info.color
-	name := info.name
-	phase := phaseLabel(s, progress)
-
-	tile := fmt.Sprintf("{%d}", color)
-	inner := tile + name + tile
-	innerTiles := 2 + len([]rune(name))
-	total := layout.Cols - innerTiles
-	left := total / 2
-	right := total - left
-	row2 := strings.Repeat(" ", left) + inner + strings.Repeat(" ", right)
+	label := progressLabel(s, progress)
 
 	return [3]string{
 		layout.ColorRow(color),
-		row2,
-		layout.Center(phase, layout.Cols),
+		layout.Center(label, layout.Cols),
+		layout.ColorRow(color),
 	}
 }
