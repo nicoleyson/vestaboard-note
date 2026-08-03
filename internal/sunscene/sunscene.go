@@ -59,14 +59,10 @@ func rowColor(r, sr int, progress float64) int {
 		}
 		return orange
 	default:
-		switch r {
-		case 0:
+		if r < 2 {
 			return blue
-		case 1:
-			return blue
-		default:
-			return orange
 		}
+		return orange
 	}
 }
 
