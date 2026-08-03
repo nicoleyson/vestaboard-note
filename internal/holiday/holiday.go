@@ -217,6 +217,17 @@ func artStrip(name string) string {
 	return layout.ColorRow(65)
 }
 
+func wrapRows(name string) (row2, row3 string) {
+	lines := layout.Wrap(strings.ToUpper(name), layout.Cols)
+	if len(lines) > 0 {
+		row2 = layout.Center(lines[0], layout.Cols)
+	}
+	if len(lines) > 1 {
+		row3 = layout.Center(lines[1], layout.Cols)
+	}
+	return
+}
+
 func TodaysName(lat, lon float64) string {
 	code, err := countryCode(lat, lon)
 	if err != nil {
@@ -244,15 +255,7 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 	}
 
 	if name := findToday(holidays, today); name != "" {
-		upper := strings.ToUpper(name)
-		lines := layout.Wrap(upper, layout.Cols)
-		row2, row3 := "", ""
-		if len(lines) > 0 {
-			row2 = layout.Center(lines[0], layout.Cols)
-		}
-		if len(lines) > 1 {
-			row3 = layout.Center(lines[1], layout.Cols)
-		}
+		row2, row3 := wrapRows(name)
 		return [3]string{artStrip(name), row2, row3}, false, nil
 	}
 
@@ -272,12 +275,7 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 		}, true, nil
 	}
 
-	upper := strings.ToUpper(nextName)
-	lines := layout.Wrap(upper, layout.Cols)
-	row2 := ""
-	if len(lines) > 0 {
-		row2 = layout.Center(lines[0], layout.Cols)
-	}
+	row2, _ := wrapRows(nextName)
 
 	var row3 string
 	switch days {

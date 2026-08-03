@@ -101,26 +101,25 @@ func cleanArtistName(name string) string {
 	return name
 }
 
+func matchesAny(styles []string, have []string) bool {
+	for _, want := range styles {
+		for _, h := range have {
+			if strings.EqualFold(want, h) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func scoreRecord(r record, weatherStyles, timeStyles []string, slot timeSlot) int {
 	score := 1
-	for _, want := range weatherStyles {
-		for _, have := range r.styles {
-			if strings.EqualFold(want, have) {
-				score += 2
-				goto doneWeather
-			}
-		}
+	if matchesAny(weatherStyles, r.styles) {
+		score += 2
 	}
-doneWeather:
-	for _, want := range timeStyles {
-		for _, have := range r.styles {
-			if strings.EqualFold(want, have) {
-				score++
-				goto doneTime
-			}
-		}
+	if matchesAny(timeStyles, r.styles) {
+		score++
 	}
-doneTime:
 	if titleMatchesSlot(r.title, slot) {
 		score += 3
 	}

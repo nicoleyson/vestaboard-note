@@ -132,44 +132,32 @@ func vibeLabel(wmoCode int, s season, slot timeSlot) string {
 
 func conditionBucket(wmoCode int) string {
 	switch {
-	case wmoCode == 0 || wmoCode == 1:
+	case wmoCode <= 1:
 		return "clear"
-	case wmoCode == 2 || wmoCode == 3:
+	case wmoCode <= 3:
 		return "cloudy"
-	case wmoCode >= 4 && wmoCode <= 12:
+	case wmoCode <= 12:
 		return "fog"
-	case wmoCode >= 13 && wmoCode <= 19:
+	case wmoCode <= 29:
 		return "rain"
-	case wmoCode >= 20 && wmoCode <= 29:
-		return "rain"
-	case wmoCode >= 30 && wmoCode <= 35:
+	case wmoCode <= 35:
 		return "storm"
-	case wmoCode >= 36 && wmoCode <= 39:
+	case wmoCode <= 39:
 		return "snow"
-	case wmoCode >= 40 && wmoCode <= 44:
+	case wmoCode <= 48:
 		return "fog"
-	case wmoCode == 45 || wmoCode == 48:
-		return "fog"
-	case wmoCode >= 51 && wmoCode <= 67:
+	case wmoCode <= 70:
 		return "rain"
-	case wmoCode >= 68 && wmoCode <= 70:
-		return "rain"
-	case wmoCode >= 71 && wmoCode <= 77:
+	case wmoCode <= 79:
 		return "snow"
-	case wmoCode >= 78 && wmoCode <= 79:
-		return "snow"
-	case wmoCode >= 80 && wmoCode <= 82:
+	case wmoCode <= 84:
 		return "rain"
-	case wmoCode >= 83 && wmoCode <= 84:
-		return "rain"
-	case wmoCode >= 85 && wmoCode <= 86:
+	case wmoCode <= 86:
 		return "snow"
-	case wmoCode >= 87 && wmoCode <= 94:
-		return "storm"
-	case wmoCode >= 95:
+	case wmoCode <= 94:
 		return "storm"
 	default:
-		return "clear"
+		return "storm"
 	}
 }
 
