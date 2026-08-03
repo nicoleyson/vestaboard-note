@@ -52,7 +52,6 @@ make cron            # installs the recommended crontab schedule
 | `flights` | Aircraft currently overhead — callsign, origin, altitude | `lat`, `lon` |
 | `satellites` | Notable satellite overhead — ISS, GPS, Iridium — with elevation and direction | `lat`, `lon` |
 | `holiday` | Today's public holiday by location (200+ countries via Nager.Date) | `lat`, `lon` |
-| `onthisday` | A historical event from today's date via Wikipedia | — |
 | `countdown` | Days until a configured event | `countdowns` in config |
 | `discogs` | A record from your collection matched to current weather and time of day | `discogs_username`, `discogs_token`, `lat`, `lon` |
 | `tearoff` | Tear-off calendar showing today's date | — |
@@ -155,7 +154,6 @@ Everything is free. Most require no account.
 | flights | [OpenSky Network](https://opensky-network.org/) (no key) |
 | satellites | [Satlas](https://satlas.app/) (no key) |
 | holiday | [Nager.Date](https://date.nager.at/) + [Nominatim](https://nominatim.org/) (no key) |
-| onthisday | [Wikipedia REST API](https://en.wikipedia.org/api/rest_v1/) (no key) |
 | calendar | iCal secret URL (your Google/iCloud/Outlook calendar) |
 | discogs | [Discogs API](https://www.discogs.com/developers) (free token) |
 | moonphase, season, countdown, tearoff, clock, pattern | local math only |

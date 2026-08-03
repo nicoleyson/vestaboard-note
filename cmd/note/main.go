@@ -16,7 +16,6 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/flights"
 	"github.com/nicoleyson/vestaboard-note/internal/holiday"
 	"github.com/nicoleyson/vestaboard-note/internal/moonphase"
-	"github.com/nicoleyson/vestaboard-note/internal/onthisday"
 	"github.com/nicoleyson/vestaboard-note/internal/pattern"
 	"github.com/nicoleyson/vestaboard-note/internal/pollen"
 	"github.com/nicoleyson/vestaboard-note/internal/rain"
@@ -32,7 +31,7 @@ import (
 
 var subcommands = []string{
 	"weather", "clock", "calendar", "moonphase", "air",
-	"flights", "onthisday", "countdown", "discogs", "pattern",
+	"flights", "countdown", "discogs", "pattern",
 	"suntime", "sunscene", "pollen", "uv", "rain", "season", "holiday", "satellites", "tearoff",
 	"status", "completion",
 }
@@ -133,9 +132,6 @@ func runStatus(cfg config) {
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "satellites")
 	}
 
-	lines, err = onthisday.Fetch(now)
-	printLines("onthisday", lines, err)
-
 	printLines("countdown", countdown.Format(cfg.Countdowns, now), nil)
 
 	if cfg.DiscogsToken != "" && cfg.DiscogsUsername != "" && (cfg.Lat != 0 || cfg.Lon != 0) {
@@ -152,7 +148,7 @@ func runStatus(cfg config) {
 const bashCompletion = `_note_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local cmds="weather clock calendar moonphase air flights onthisday countdown discogs pattern suntime sunscene pollen uv rain season holiday satellites tearoff status completion"
+    local cmds="weather clock calendar moonphase air flights countdown discogs pattern suntime sunscene pollen uv rain season holiday satellites tearoff status completion"
     local patterns="current random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow"
     if [[ "${prev}" == "pattern" ]]; then
         COMPREPLY=($(compgen -W "${patterns}" -- "${cur}"))
@@ -174,7 +170,6 @@ _note() {
         'moonphase:lunar phase'
         'air:air quality index'
         'flights:aircraft overhead'
-        'onthisday:historical event'
         'countdown:days until configured event'
         'discogs:record matched to weather and time'
         'pattern:random art and color patterns'
@@ -221,7 +216,6 @@ complete -c note -n __fish_use_subcommand -a calendar   -d 'Next calendar event'
 complete -c note -n __fish_use_subcommand -a moonphase   -d 'Lunar phase'
 complete -c note -n __fish_use_subcommand -a air        -d 'Air quality index'
 complete -c note -n __fish_use_subcommand -a flights    -d 'Aircraft overhead'
-complete -c note -n __fish_use_subcommand -a onthisday  -d 'Historical event'
 complete -c note -n __fish_use_subcommand -a countdown  -d 'Days until configured event'
 complete -c note -n __fish_use_subcommand -a discogs    -d 'Record matched to weather and time'
 complete -c note -n __fish_use_subcommand -a pattern    -d 'Random art and color patterns'
@@ -321,8 +315,6 @@ func main() {
 			os.Exit(1)
 		}
 		lines, trivial, err = flights.Fetch(cfg.Lat, cfg.Lon)
-	case "onthisday":
-		lines, err = onthisday.Fetch(time.Now())
 	case "countdown":
 		lines = countdown.Format(cfg.Countdowns, time.Now())
 	case "discogs":
