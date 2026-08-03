@@ -51,11 +51,14 @@ func TestEncodeLines(t *testing.T) {
 func TestEncodeLinesDimensions(t *testing.T) {
 	lines := [3]string{"HELLO", "WORLD", "12345"}
 	grid := encodeLines(lines)
-	if len(grid) != rows {
-		t.Errorf("encodeLines rows = %d, want %d", len(grid), rows)
+	if grid[0][0] != charCode('H') {
+		t.Errorf("encodeLines: grid[0][0] = %d, want H (%d)", grid[0][0], charCode('H'))
 	}
-	if len(grid[0]) != cols {
-		t.Errorf("encodeLines cols = %d, want %d", len(grid[0]), cols)
+	if grid[1][0] != charCode('W') {
+		t.Errorf("encodeLines: grid[1][0] = %d, want W (%d)", grid[1][0], charCode('W'))
+	}
+	if grid[2][0] != charCode('1') {
+		t.Errorf("encodeLines: grid[2][0] = %d, want 1 (%d)", grid[2][0], charCode('1'))
 	}
 }
 
