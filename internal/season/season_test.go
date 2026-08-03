@@ -2,6 +2,7 @@ package season
 
 import (
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 )
@@ -12,6 +13,30 @@ var placeholderRe = regexp.MustCompile(`\{[0-9]+\}`)
 func tileCount(s string) int {
 	rest := placeholderRe.ReplaceAllString(s, "X")
 	return len([]rune(rest))
+}
+
+func formatWithProgress(s Season, progress float64) [3]string {
+	var start, end time.Time
+	switch s {
+	case Spring:
+		start = time.Date(2026, 3, 20, 0, 0, 0, 0, time.UTC)
+		end = time.Date(2026, 6, 21, 0, 0, 0, 0, time.UTC)
+	case Summer:
+		start = time.Date(2026, 6, 21, 0, 0, 0, 0, time.UTC)
+		end = time.Date(2026, 9, 22, 0, 0, 0, 0, time.UTC)
+	case Fall:
+		start = time.Date(2026, 9, 22, 0, 0, 0, 0, time.UTC)
+		end = time.Date(2026, 12, 21, 0, 0, 0, 0, time.UTC)
+	default:
+		start = time.Date(2026, 12, 21, 0, 0, 0, 0, time.UTC)
+		end = time.Date(2027, 3, 20, 0, 0, 0, 0, time.UTC)
+	}
+	if progress >= 0.99 {
+		return Format(end.Add(-1 * time.Hour))
+	}
+	total := end.Sub(start)
+	ts := start.Add(time.Duration(float64(total) * progress))
+	return Format(ts)
 }
 
 func TestCurrentSpring(t *testing.T) {
@@ -82,13 +107,6 @@ func TestProgressLabel_midSeason(t *testing.T) {
 	}
 }
 
-func TestProgressLabel_lastDay(t *testing.T) {
-	label := progressLabel(Summer, 0.999)
-	if label != "LAST DAY" {
-		t.Errorf("got %q, want %q", label, "LAST DAY")
-	}
-}
-
 func TestProgressLabel_allSeasonsLessThan16(t *testing.T) {
 	seasons := []Season{Spring, Summer, Fall, Winter}
 	progs := []float64{0.01, 0.50, 0.98}
@@ -102,5 +120,35 @@ func TestProgressLabel_allSeasonsLessThan16(t *testing.T) {
 				t.Errorf("season=%d progress=%.2f returned empty label", s, p)
 			}
 		}
+	}
+}
+
+func TestFormat_lastDay_singleColorBar(t *testing.T) {
+	seasons := []Season{Spring, Summer, Fall, Winter}
+	for _, s := range seasons {
+		lines := formatWithProgress(s, 0.999)
+		if tileCount(lines[2]) != 15 {
+			t.Errorf("season=%d last day row3: got %d tiles, want 15", s, tileCount(lines[2]))
+		}
+		placeholders := placeholderRe.FindAllString(lines[2], -1)
+		if len(placeholders) != 0 {
+			t.Errorf("season=%d last day row3 should be blank, got color tiles: %q", s, lines[2])
+		}
+		if !strings.Contains(lines[1], "LAST DAY") {
+			t.Errorf("season=%d last day row2 should contain LAST DAY, got %q", s, lines[1])
+		}
+		if !strings.Contains(lines[1], seasonData[s].name) {
+			t.Errorf("season=%d last day row2 should contain season name, got %q", s, lines[1])
+		}
+	}
+}
+
+func TestFormat_normal_twoColorBars(t *testing.T) {
+	lines := formatWithProgress(Fall, 0.44)
+	if placeholderRe.FindString(lines[0]) == "" {
+		t.Errorf("row0 should be a color bar, got %q", lines[0])
+	}
+	if placeholderRe.FindString(lines[2]) == "" {
+		t.Errorf("row2 should be a color bar in normal mode, got %q", lines[2])
 	}
 }

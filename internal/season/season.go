@@ -30,15 +30,11 @@ var seasonData = map[Season]seasonInfo{
 }
 
 func progressLabel(s Season, progress float64) string {
-	if progress >= 0.99 {
-		return "LAST DAY"
-	}
 	pct := int(math.Round(progress * 100))
 	if pct > 99 {
 		pct = 99
 	}
-	name := seasonData[s].name
-	return fmt.Sprintf("%d%% INTO %s", pct, name)
+	return fmt.Sprintf("%d%% INTO %s", pct, seasonData[s].name)
 }
 
 // solsticeEquinox returns the approximate Unix timestamp (days since J2000.0)
@@ -116,11 +112,19 @@ func Format(t time.Time) [3]string {
 	s, progress := Current(t)
 	info := seasonData[s]
 	color := info.color
-	label := progressLabel(s, progress)
+
+	if progress >= 0.988 {
+		label := fmt.Sprintf("LAST DAY %s", info.name)
+		return [3]string{
+			layout.ColorRow(color),
+			layout.Center(label, layout.Cols),
+			layout.PadRight("", layout.Cols),
+		}
+	}
 
 	return [3]string{
 		layout.ColorRow(color),
-		layout.Center(label, layout.Cols),
+		layout.Center(progressLabel(s, progress), layout.Cols),
 		layout.ColorRow(color),
 	}
 }
