@@ -7,7 +7,7 @@ NOTE_BIN       ?= $(VESTABOARD_DIR)/$(BIN)
 UNAME          := $(shell uname)
 CRON_USER      := $(shell id -un)
 
-.PHONY: build install uninstall run-weather run-clock run-calendar tidy \
+.PHONY: build install uninstall run-weather run-clock run-calendar tidy lint status \
         cron cron-init cron-update cron-uninstall _cron-render _cron-apply
 
 # ── Build ────────────────────────────────────────────────────────────────────
@@ -41,6 +41,14 @@ run-calendar: build
 
 tidy:
 	go mod tidy
+
+lint:
+	go vet ./...
+	@which staticcheck > /dev/null 2>&1 || go install honnef.co/go/tools/cmd/staticcheck@latest
+	staticcheck ./...
+
+status: build
+	./$(BIN) status
 
 # ── Cron ─────────────────────────────────────────────────────────────────────
 # make cron          — smart: init on first run, update on subsequent runs
