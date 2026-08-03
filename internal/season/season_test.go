@@ -1,6 +1,8 @@
 package season
 
 import (
+	"fmt"
+	"math"
 	"regexp"
 	"strings"
 	"testing"
@@ -149,5 +151,43 @@ func TestFormat_normal_twoColorBars(t *testing.T) {
 	}
 	if placeholderRe.FindString(lines[2]) == "" {
 		t.Errorf("row2 should be a color bar in normal mode, got %q", lines[2])
+	}
+}
+
+func TestFormat_row2_centeredAndContainsProgress(t *testing.T) {
+	dates := []time.Time{
+		time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC),
+		time.Date(2026, 7, 15, 0, 0, 0, 0, time.UTC),
+		time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC),
+		time.Date(2027, 1, 15, 0, 0, 0, 0, time.UTC),
+	}
+	for _, d := range dates {
+		s, progress := Current(d)
+		if progress >= 0.988 {
+			continue
+		}
+		pct := int(math.Round(progress * 100))
+		if pct > 99 {
+			pct = 99
+		}
+		lines := Format(d)
+		row2 := lines[1]
+
+		if len([]rune(row2)) != 15 {
+			t.Errorf("%s row2 len=%d want 15: %q", d.Format("Jan 2"), len([]rune(row2)), row2)
+		}
+		wantPct := fmt.Sprintf("%d%%", pct)
+		if !strings.Contains(row2, wantPct) {
+			t.Errorf("%s row2 missing %q: %q", d.Format("Jan 2"), wantPct, row2)
+		}
+		if !strings.Contains(row2, seasonData[s].name) {
+			t.Errorf("%s row2 missing season name %q: %q", d.Format("Jan 2"), seasonData[s].name, row2)
+		}
+		trimmed := strings.TrimSpace(row2)
+		leftPad := strings.Index(row2, trimmed[:1])
+		rightPad := 15 - leftPad - len([]rune(trimmed))
+		if leftPad < rightPad-1 {
+			t.Errorf("%s row2 not centered: leftPad=%d rightPad=%d %q", d.Format("Jan 2"), leftPad, rightPad, row2)
+		}
 	}
 }
