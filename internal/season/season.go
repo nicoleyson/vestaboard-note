@@ -114,11 +114,10 @@ func Format(t time.Time) [3]string {
 	color := info.color
 
 	if progress >= 0.988 {
-		label := fmt.Sprintf("LAST DAY %s", info.name)
 		return [3]string{
 			layout.ColorRow(color),
-			layout.Center(label, layout.Cols),
-			layout.PadRight("", layout.Cols),
+			layout.Center("LAST DAY", layout.Cols),
+			layout.Center("OF "+info.name, layout.Cols),
 		}
 	}
 

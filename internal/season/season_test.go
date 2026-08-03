@@ -130,15 +130,14 @@ func TestFormat_lastDay_singleColorBar(t *testing.T) {
 		if tileCount(lines[2]) != 15 {
 			t.Errorf("season=%d last day row3: got %d tiles, want 15", s, tileCount(lines[2]))
 		}
-		placeholders := placeholderRe.FindAllString(lines[2], -1)
-		if len(placeholders) != 0 {
-			t.Errorf("season=%d last day row3 should be blank, got color tiles: %q", s, lines[2])
+		if placeholderRe.FindString(lines[2]) != "" {
+			t.Errorf("season=%d last day row3 should not be a color bar, got %q", s, lines[2])
 		}
 		if !strings.Contains(lines[1], "LAST DAY") {
 			t.Errorf("season=%d last day row2 should contain LAST DAY, got %q", s, lines[1])
 		}
-		if !strings.Contains(lines[1], seasonData[s].name) {
-			t.Errorf("season=%d last day row2 should contain season name, got %q", s, lines[1])
+		if !strings.Contains(lines[2], seasonData[s].name) {
+			t.Errorf("season=%d last day row3 should contain season name, got %q", s, lines[2])
 		}
 	}
 }
