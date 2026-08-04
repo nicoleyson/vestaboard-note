@@ -1,10 +1,10 @@
 VESTABOARD_DIR={{VESTABOARD_DIR}}
 VESTABOARD_LOG={{VESTABOARD_DIR}}/vestaboard.log
 PATH=/usr/local/bin:/usr/bin:/bin
-CRON_TZ=America/Los_Angeles
-TZ=America/Los_Angeles
 
-# All times are Pacific (PDT in summer, PST in winter). CRON_TZ handles DST automatically.
+# All times are America/Los_Angeles (PDT/PST). Server timezone is set to America/Los_Angeles
+# via: sudo timedatectl set-timezone America/Los_Angeles
+# DST is handled automatically by the OS — no need to update this file for daylight saving.
 # Rain, pollen, air skip posting when trivial with --skip-trivial.
 # All output logged to $VESTABOARD_LOG — tail -f to watch live.
 
