@@ -18,13 +18,13 @@ TZ=America/Los_Angeles
 # ── Afternoon ─────────────────────────────────────────────────────
 0 13 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') calendar" >> $VESTABOARD_LOG && {{NOTE_BIN}} calendar >> $VESTABOARD_LOG 2>&1
 0 15 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') season" >> $VESTABOARD_LOG && {{NOTE_BIN}} season >> $VESTABOARD_LOG 2>&1
-0 16 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') holiday" >> $VESTABOARD_LOG && {{NOTE_BIN}} holiday --skip-trivial >> $VESTABOARD_LOG 2>&1
+0 16 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') holiday" >> $VESTABOARD_LOG && {{NOTE_BIN}} holiday >> $VESTABOARD_LOG 2>&1
 0 17 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') air" >> $VESTABOARD_LOG && {{NOTE_BIN}} air --skip-trivial >> $VESTABOARD_LOG 2>&1
 0 18 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') suntime" >> $VESTABOARD_LOG && {{NOTE_BIN}} suntime >> $VESTABOARD_LOG 2>&1
 0 19 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') satellites" >> $VESTABOARD_LOG && {{NOTE_BIN}} satellites --skip-trivial >> $VESTABOARD_LOG 2>&1
 
 # ── Evening ───────────────────────────────────────────────────────
-0 20 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') holiday" >> $VESTABOARD_LOG && {{NOTE_BIN}} holiday --skip-trivial >> $VESTABOARD_LOG 2>&1
+0 20 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') holiday" >> $VESTABOARD_LOG && {{NOTE_BIN}} holiday >> $VESTABOARD_LOG 2>&1
 0 21 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') moonphase" >> $VESTABOARD_LOG && {{NOTE_BIN}} moonphase >> $VESTABOARD_LOG 2>&1
 0 22 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') season" >> $VESTABOARD_LOG && {{NOTE_BIN}} season >> $VESTABOARD_LOG 2>&1
 
