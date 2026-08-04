@@ -6,6 +6,7 @@ VESTABOARD_DIR ?= $(shell pwd)
 NOTE_BIN       ?= $(VESTABOARD_DIR)/$(BIN)
 UNAME          := $(shell uname)
 CRON_USER      := $(shell id -un)
+GIT_SHA        := $(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
 
 .PHONY: build install uninstall run-weather run-clock run-calendar tidy lint status \
         cron cron-init cron-update cron-uninstall _cron-render _cron-apply
@@ -13,7 +14,7 @@ CRON_USER      := $(shell id -un)
 # ── Build ────────────────────────────────────────────────────────────────────
 
 build:
-	go build -o $(BIN) $(CMD)
+	go build -ldflags "-X main.version=$(GIT_SHA)" -o $(BIN) $(CMD)
 
 install: build
 	@echo "Installing $(BIN) to $(DESTDIR)/$(BIN)..."

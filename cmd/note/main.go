@@ -29,6 +29,9 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/weather"
 )
 
+// version is set at build time via -ldflags "-X main.version=<git-sha>"
+var version = "dev"
+
 var subcommands = []string{
 	"weather", "clock", "calendar", "moonphase", "air",
 	"flights", "countdown", "discogs", "pattern",
@@ -75,7 +78,7 @@ func printLines(label string, lines [3]string, err error) {
 
 func runStatus(cfg config) {
 	now := time.Now()
-	fmt.Println("vestaboard-note status")
+	fmt.Printf("vestaboard-note status (build %s)\n", version)
 	fmt.Println(strings.Repeat("─", 50))
 
 	lines, err := weather.Fetch(cfg.Lat, cfg.Lon)
@@ -234,6 +237,7 @@ complete -c note -n '__fish_seen_subcommand_from pattern' -a 'current random str
 complete -c note -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish'`
 
 func main() {
+	fmt.Fprintf(os.Stderr, "note %s\n", version)
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr, "usage: note <%s>\n", strings.Join(subcommands, "|"))
 		os.Exit(1)
