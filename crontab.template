@@ -1,58 +1,33 @@
 VESTABOARD_DIR={{VESTABOARD_DIR}}
 VESTABOARD_LOG={{VESTABOARD_DIR}}/vestaboard.log
 PATH=/usr/local/bin:/usr/bin:/bin
+CRON_TZ=America/Los_Angeles
 
-# All times are UTC. Server runs UTC; PDT = UTC-7, PST = UTC-8.
-# PDT schedule (summer): add 7h to get UTC. PST (winter): add 8h.
+# All times are Pacific (PDT in summer, PST in winter). CRON_TZ handles DST automatically.
 # Rain, pollen, air skip posting when trivial with --skip-trivial.
 # All output logged to $VESTABOARD_LOG — tail -f to watch live.
 
-# ── Weather: 8am–7:30pm PDT = 15:00–02:30 UTC ────────────────────
-*/30 15-23 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') weather" >> $VESTABOARD_LOG && {{NOTE_BIN}} weather >> $VESTABOARD_LOG 2>&1
-*/30 0-2   * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') weather" >> $VESTABOARD_LOG && {{NOTE_BIN}} weather >> $VESTABOARD_LOG 2>&1
+# ── Weather: every 30min, 8am–7:30pm ─────────────────────────────
+*/30 8-19 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') weather" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} weather >> {{VESTABOARD_LOG}} 2>&1
 
 # ── Morning ───────────────────────────────────────────────────────
-0 16 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') uv" >> $VESTABOARD_LOG && {{NOTE_BIN}} uv --skip-trivial >> $VESTABOARD_LOG 2>&1
-# 9am PDT = 16:00 UTC
-
-0 18 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') pollen" >> $VESTABOARD_LOG && {{NOTE_BIN}} pollen --skip-trivial >> $VESTABOARD_LOG 2>&1
-# 11am PDT = 18:00 UTC
-
-0 19 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') rain" >> $VESTABOARD_LOG && {{NOTE_BIN}} rain --skip-trivial >> $VESTABOARD_LOG 2>&1
-# 12pm PDT = 19:00 UTC
+0  9 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') uv" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} uv --skip-trivial >> {{VESTABOARD_LOG}} 2>&1
+0 11 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') pollen" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} pollen --skip-trivial >> {{VESTABOARD_LOG}} 2>&1
+0 12 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') rain" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} rain --skip-trivial >> {{VESTABOARD_LOG}} 2>&1
 
 # ── Afternoon ─────────────────────────────────────────────────────
-0 20 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') calendar" >> $VESTABOARD_LOG && {{NOTE_BIN}} calendar >> $VESTABOARD_LOG 2>&1
-# 1pm PDT = 20:00 UTC
-
-0 22 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') season" >> $VESTABOARD_LOG && {{NOTE_BIN}} season >> $VESTABOARD_LOG 2>&1
-# 3pm PDT = 22:00 UTC
-
-0 23 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') holiday" >> $VESTABOARD_LOG && {{NOTE_BIN}} holiday >> $VESTABOARD_LOG 2>&1
-# 4pm PDT = 23:00 UTC
-
-0  0 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') air" >> $VESTABOARD_LOG && {{NOTE_BIN}} air --skip-trivial >> $VESTABOARD_LOG 2>&1
-# 5pm PDT = 00:00 UTC
-
-0  1 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') suntime" >> $VESTABOARD_LOG && {{NOTE_BIN}} suntime >> $VESTABOARD_LOG 2>&1
-# 6pm PDT = 01:00 UTC
-
-0  2 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') satellites" >> $VESTABOARD_LOG && {{NOTE_BIN}} satellites --skip-trivial >> $VESTABOARD_LOG 2>&1
-# 7pm PDT = 02:00 UTC
+0 13 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') calendar" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} calendar >> {{VESTABOARD_LOG}} 2>&1
+0 15 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') season" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} season >> {{VESTABOARD_LOG}} 2>&1
+0 16 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') holiday" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} holiday >> {{VESTABOARD_LOG}} 2>&1
+0 17 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') air" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} air --skip-trivial >> {{VESTABOARD_LOG}} 2>&1
+0 18 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') suntime" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} suntime >> {{VESTABOARD_LOG}} 2>&1
+0 19 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') satellites" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} satellites --skip-trivial >> {{VESTABOARD_LOG}} 2>&1
 
 # ── Evening ───────────────────────────────────────────────────────
-0  3 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') holiday" >> $VESTABOARD_LOG && {{NOTE_BIN}} holiday >> $VESTABOARD_LOG 2>&1
-# 8pm PDT = 03:00 UTC
-
-0  4 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') moonphase" >> $VESTABOARD_LOG && {{NOTE_BIN}} moonphase >> $VESTABOARD_LOG 2>&1
-# 9pm PDT = 04:00 UTC
-
-0  5 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') season" >> $VESTABOARD_LOG && {{NOTE_BIN}} season >> $VESTABOARD_LOG 2>&1
-# 10pm PDT = 05:00 UTC
+0 20 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') holiday" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} holiday >> {{VESTABOARD_LOG}} 2>&1
+0 21 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') moonphase" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} moonphase >> {{VESTABOARD_LOG}} 2>&1
+0 22 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') season" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} season >> {{VESTABOARD_LOG}} 2>&1
 
 # ── Overnight ─────────────────────────────────────────────────────
-0  6 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') tearoff" >> $VESTABOARD_LOG && {{NOTE_BIN}} tearoff >> $VESTABOARD_LOG 2>&1
-# 11pm PDT = 06:00 UTC
-
-0  7 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+%Y-%m-%d %H:%M UTC') tearoff" >> $VESTABOARD_LOG && {{NOTE_BIN}} tearoff >> $VESTABOARD_LOG 2>&1
-# midnight PDT = 07:00 UTC
+0 23 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') tearoff" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} tearoff >> {{VESTABOARD_LOG}} 2>&1
+0  0 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') tearoff" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} tearoff >> {{VESTABOARD_LOG}} 2>&1

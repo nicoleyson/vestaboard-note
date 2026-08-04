@@ -4,8 +4,6 @@ DESTDIR := /usr/local/bin
 
 VESTABOARD_DIR ?= $(shell pwd)
 NOTE_BIN       ?= $(VESTABOARD_DIR)/$(BIN)
-UNAME          := $(shell uname)
-CRON_USER      := $(shell id -un)
 GIT_SHA        := $(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
 
 .PHONY: build install uninstall run-weather run-clock run-calendar tidy lint status \
@@ -57,78 +55,44 @@ status: build
 # make cron-update   — always replace with current template
 # make cron-uninstall — remove vestaboard cron entries
 
-# Render the template → /tmp/vestaboard-cron
-# On Linux: add username column (required by /etc/cron.d/)
-# On macOS: {{USER}} is blank (user crontab doesn't need it)
+# Render the template → /tmp/vestaboard-cron-render
+# {{USER}} is unused (user crontab doesn't need username column)
 _cron-render:
-ifeq ($(UNAME), Linux)
 	@sed \
 	  -e 's|{{VESTABOARD_DIR}}|$(VESTABOARD_DIR)|g' \
-	  -e 's|{{NOTE_BIN}}|$(NOTE_BIN)|g' \
-	  -e 's|{{USER}}|$(CRON_USER) |g' \
-	  crontab.template > /tmp/vestaboard-cron
-else
-	@sed \
-	  -e 's|{{VESTABOARD_DIR}}|$(VESTABOARD_DIR)|g' \
+	  -e 's|{{VESTABOARD_LOG}}|$(VESTABOARD_DIR)/vestaboard.log|g' \
 	  -e 's|{{NOTE_BIN}}|$(NOTE_BIN)|g' \
 	  -e 's|{{USER}}||g' \
-	  crontab.template > /tmp/vestaboard-cron
-endif
+	  crontab.template > /tmp/vestaboard-cron-render
 
-# Apply /tmp/vestaboard-cron to the system
+# Apply /tmp/vestaboard-cron-render to the user crontab (works on both macOS and Linux)
 _cron-apply:
-ifeq ($(UNAME), Linux)
-	sudo cp /tmp/vestaboard-cron /etc/cron.d/vestaboard
-	sudo chmod 644 /etc/cron.d/vestaboard
-	@echo "Installed to /etc/cron.d/vestaboard"
-else
 	@( \
 	  crontab -l 2>/dev/null \
 	  | awk '/# BEGIN VESTABOARD/{found=1} !found{print} /# END VESTABOARD/{found=0}'; \
 	  echo '# BEGIN VESTABOARD'; \
-	  cat /tmp/vestaboard-cron; \
+	  cat /tmp/vestaboard-cron-render; \
 	  echo '# END VESTABOARD' \
 	) | crontab -
-	@echo "Installed to user crontab (macOS)"
-endif
+	@echo "Installed to user crontab"
 
 cron: _cron-render
-ifeq ($(UNAME), Linux)
-	@if [ -f /etc/cron.d/vestaboard ]; then \
-	  $(MAKE) _cron-apply && echo "Updated existing /etc/cron.d/vestaboard"; \
-	else \
-	  $(MAKE) _cron-apply && echo "Created /etc/cron.d/vestaboard"; \
-	fi
-else
 	@if crontab -l 2>/dev/null | grep -q '# BEGIN VESTABOARD'; then \
 	  $(MAKE) _cron-apply && echo "Updated existing vestaboard crontab block"; \
 	else \
 	  $(MAKE) _cron-apply && echo "Added vestaboard block to crontab"; \
 	fi
-endif
 
 cron-init: _cron-render
-ifeq ($(UNAME), Linux)
-	@if [ -f /etc/cron.d/vestaboard ]; then \
-	  echo "Already installed at /etc/cron.d/vestaboard. Use 'make cron-update' to overwrite."; exit 1; \
-	fi
-	$(MAKE) _cron-apply
-else
 	@if crontab -l 2>/dev/null | grep -q '# BEGIN VESTABOARD'; then \
 	  echo "Vestaboard crontab block already exists. Use 'make cron-update' to overwrite."; exit 1; \
 	fi
 	$(MAKE) _cron-apply
-endif
 
 cron-update: _cron-render _cron-apply
 
 cron-uninstall:
-ifeq ($(UNAME), Linux)
-	sudo rm -f /etc/cron.d/vestaboard
-	@echo "Removed /etc/cron.d/vestaboard"
-else
 	@( crontab -l 2>/dev/null \
 	  | awk '/# BEGIN VESTABOARD/{found=1} !found{print} /# END VESTABOARD/{found=0}' \
 	) | crontab -
 	@echo "Removed vestaboard block from crontab"
-endif
