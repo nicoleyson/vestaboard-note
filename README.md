@@ -2,7 +2,7 @@
 
 A Go CLI for the [Vestaboard Note](https://www.vestaboard.com/note) — the compact 3×15 split-flap display. Point it at your location, add your API token, and the daemon takes care of the rest.
 
-Twenty subcommands. No subscriptions. Almost everything is keyless.
+Twenty subcommands. No subscriptions.
 
 ---
 
