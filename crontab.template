@@ -2,6 +2,7 @@ VESTABOARD_DIR={{VESTABOARD_DIR}}
 VESTABOARD_LOG={{VESTABOARD_DIR}}/vestaboard.log
 PATH=/usr/local/bin:/usr/bin:/bin
 CRON_TZ=America/Los_Angeles
+TZ=America/Los_Angeles
 
 # All times are Pacific (PDT in summer, PST in winter). CRON_TZ handles DST automatically.
 # Rain, pollen, air skip posting when trivial with --skip-trivial.
