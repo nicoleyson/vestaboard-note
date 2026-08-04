@@ -2,9 +2,9 @@ VESTABOARD_DIR={{VESTABOARD_DIR}}
 VESTABOARD_LOG={{VESTABOARD_DIR}}/vestaboard.log
 PATH=/usr/local/bin:/usr/bin:/bin
 
-# All times are America/Los_Angeles (PDT/PST). Server timezone is set to America/Los_Angeles
-# via: sudo timedatectl set-timezone America/Los_Angeles
-# DST is handled automatically by the OS — no need to update this file for daylight saving.
+# All times use the server's local timezone. Set the server timezone to your local timezone
+# before installing: sudo timedatectl set-timezone Your/Timezone (e.g. America/Los_Angeles)
+# DST is then handled automatically by the OS — no need to update this file for daylight saving.
 # Rain, pollen, air skip posting when trivial with --skip-trivial.
 # All output logged to $VESTABOARD_LOG — tail -f to watch live.
 

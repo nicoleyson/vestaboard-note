@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -36,17 +37,37 @@ var subcommands = []string{
 	"weather", "clock", "calendar", "moonphase", "air",
 	"flights", "countdown", "discogs", "pattern",
 	"suntime", "sunscene", "pollen", "uv", "rain", "season", "holiday", "satellites", "tearoff",
-	"status", "completion",
+	"daemon", "status", "completion",
+}
+
+// scheduleEntry defines one scheduled job in config.yaml.
+// Fields:
+//
+//	command        — subcommand name (e.g. "weather")
+//	hour           — hour to run (0–23, local timezone)
+//	minute         — minute to run (default 0)
+//	repeat_minutes — if > 0, repeat every N minutes within the hour window
+//	until_hour     — last hour (inclusive) to repeat within (requires repeat_minutes)
+//	args           — extra flags passed to the subcommand (e.g. ["--skip-trivial"])
+type scheduleEntry struct {
+	Command       string   `yaml:"command"`
+	Hour          int      `yaml:"hour"`
+	Minute        int      `yaml:"minute"`
+	RepeatMinutes int      `yaml:"repeat_minutes"`
+	UntilHour     int      `yaml:"until_hour"`
+	Args          []string `yaml:"args"`
 }
 
 type config struct {
-	Token           string            `yaml:"token"`
-	Lat             float64           `yaml:"lat"`
-	Lon             float64           `yaml:"lon"`
-	ICalURLs        []string          `yaml:"ical_urls"`
+	Token           string          `yaml:"token"`
+	Lat             float64         `yaml:"lat"`
+	Lon             float64         `yaml:"lon"`
+	ICalURLs        []string        `yaml:"ical_urls"`
 	Countdowns      []countdown.Event `yaml:"countdowns"`
-	DiscogsToken    string            `yaml:"discogs_token"`
-	DiscogsUsername string            `yaml:"discogs_username"`
+	DiscogsToken    string          `yaml:"discogs_token"`
+	DiscogsUsername string          `yaml:"discogs_username"`
+	Timezone        string          `yaml:"timezone"`
+	Schedule        []scheduleEntry `yaml:"schedule"`
 }
 
 func loadConfig() (config, error) {
@@ -151,7 +172,7 @@ func runStatus(cfg config) {
 const bashCompletion = `_note_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local cmds="weather clock calendar moonphase air flights countdown discogs pattern suntime sunscene pollen uv rain season holiday satellites tearoff status completion"
+    local cmds="weather clock calendar moonphase air flights countdown discogs pattern suntime sunscene pollen uv rain season holiday satellites tearoff daemon status completion"
     local patterns="current random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow"
     if [[ "${prev}" == "pattern" ]]; then
         COMPREPLY=($(compgen -W "${patterns}" -- "${cur}"))
@@ -185,6 +206,7 @@ _note() {
         'holiday:today'"'"'s public holiday by location'
         'satellites:notable satellites currently overhead'
         'tearoff:tear-off calendar showing today'"'"'s date'
+        'daemon:run scheduled jobs continuously'
         'status:preview all subcommands without sending'
         'completion:print shell completion script'
     )
@@ -231,6 +253,7 @@ complete -c note -n __fish_use_subcommand -a season     -d 'Current astronomical
 complete -c note -n __fish_use_subcommand -a holiday    -d 'Today'"'"'s public holiday by location'
 complete -c note -n __fish_use_subcommand -a satellites -d 'Notable satellites currently overhead'
 complete -c note -n __fish_use_subcommand -a tearoff    -d 'Tear-off calendar showing today'"'"'s date'
+complete -c note -n __fish_use_subcommand -a daemon     -d 'Run scheduled jobs continuously'
 complete -c note -n __fish_use_subcommand -a status     -d 'Preview all subcommands without sending'
 complete -c note -n __fish_use_subcommand -a completion -d 'Print shell completion script'
 complete -c note -n '__fish_seen_subcommand_from pattern' -a 'current random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow'
@@ -244,6 +267,161 @@ func logInvocation(cmd string, cfg config) {
 	host, _ := os.Hostname()
 	fmt.Fprintf(os.Stderr, "note %s %s %s@%s lat=%.2f lon=%.2f\n",
 		version, cmd, source, host, cfg.Lat, cfg.Lon)
+}
+
+var defaultSchedule = []scheduleEntry{
+	{Command: "weather", Hour: 8, Minute: 0, RepeatMinutes: 30, UntilHour: 19},
+	{Command: "uv", Hour: 9, Minute: 0, Args: []string{"--skip-trivial"}},
+	{Command: "pollen", Hour: 11, Minute: 0, Args: []string{"--skip-trivial"}},
+	{Command: "rain", Hour: 12, Minute: 0, Args: []string{"--skip-trivial"}},
+	{Command: "calendar", Hour: 13, Minute: 0},
+	{Command: "season", Hour: 15, Minute: 0},
+	{Command: "holiday", Hour: 16, Minute: 0},
+	{Command: "air", Hour: 17, Minute: 0, Args: []string{"--skip-trivial"}},
+	{Command: "suntime", Hour: 18, Minute: 0},
+	{Command: "satellites", Hour: 19, Minute: 0, Args: []string{"--skip-trivial"}},
+	{Command: "holiday", Hour: 20, Minute: 0},
+	{Command: "moonphase", Hour: 21, Minute: 0},
+	{Command: "season", Hour: 22, Minute: 0},
+	{Command: "tearoff", Hour: 23, Minute: 0},
+	{Command: "tearoff", Hour: 0, Minute: 0},
+}
+
+func isDue(entry scheduleEntry, now time.Time) bool {
+	h, m := now.Hour(), now.Minute()
+	if entry.RepeatMinutes > 0 {
+		if h < entry.Hour || h > entry.UntilHour {
+			return false
+		}
+		return m%entry.RepeatMinutes == 0
+	}
+	return h == entry.Hour && m == entry.Minute
+}
+
+func runDaemon(cfg config) {
+	loc := time.Local
+	if cfg.Timezone != "" {
+		if l, err := time.LoadLocation(cfg.Timezone); err == nil {
+			loc = l
+		} else {
+			log.Printf("daemon: unknown timezone %q, falling back to local: %v", cfg.Timezone, err)
+		}
+	}
+
+	schedule := cfg.Schedule
+	if len(schedule) == 0 {
+		schedule = defaultSchedule
+	}
+
+	log.Printf("daemon: starting (timezone=%s, jobs=%d)", loc, len(schedule))
+
+	fired := make(map[string]time.Time)
+
+	for {
+		now := time.Now().In(loc)
+		key := now.Format("2006-01-02 15:04")
+
+		for _, entry := range schedule {
+			if !isDue(entry, now) {
+				continue
+			}
+			jobKey := key + " " + entry.Command + " " + strings.Join(entry.Args, " ")
+			if _, done := fired[jobKey]; done {
+				continue
+			}
+			fired[jobKey] = now
+
+			go func(e scheduleEntry) {
+				log.Printf("daemon: running %s %s", e.Command, strings.Join(e.Args, " "))
+				runCommand(e.Command, e.Args, cfg)
+			}(entry)
+		}
+
+		cleanupFired(fired, now)
+
+		next := now.Truncate(time.Minute).Add(time.Minute)
+		time.Sleep(time.Until(next))
+	}
+}
+
+func cleanupFired(fired map[string]time.Time, now time.Time) {
+	cutoff := now.Add(-2 * time.Minute)
+	for k, t := range fired {
+		if t.Before(cutoff) {
+			delete(fired, k)
+		}
+	}
+}
+
+func runCommand(cmd string, args []string, cfg config) {
+	skipTrivial := false
+	for _, a := range args {
+		if a == "--skip-trivial" {
+			skipTrivial = true
+		}
+	}
+
+	var lines [3]string
+	var trivial bool
+	var err error
+
+	switch cmd {
+	case "weather":
+		lines, err = weather.Fetch(cfg.Lat, cfg.Lon)
+	case "clock":
+		lines = clock.Format(time.Now())
+	case "calendar":
+		lines, err = calendar.Fetch(cfg.ICalURLs)
+	case "moonphase":
+		lines = moonphase.Format(time.Now())
+	case "air":
+		lines, trivial, err = air.Fetch(cfg.Lat, cfg.Lon)
+	case "flights":
+		lines, trivial, err = flights.Fetch(cfg.Lat, cfg.Lon)
+	case "countdown":
+		lines = countdown.Format(cfg.Countdowns, time.Now())
+	case "discogs":
+		lines, err = discogs.Fetch(cfg.DiscogsUsername, cfg.DiscogsToken, cfg.Lat, cfg.Lon)
+	case "pattern":
+		lines, err = pattern.Current(cfg.Lat, cfg.Lon)
+	case "suntime":
+		lines, err = suntime.Fetch(cfg.Lat, cfg.Lon)
+	case "sunscene":
+		lines, err = sunscene.Fetch(cfg.Lat, cfg.Lon)
+	case "pollen":
+		lines, trivial, err = pollen.Fetch(cfg.Lat, cfg.Lon)
+	case "uv":
+		lines, err = uv.Fetch(cfg.Lat, cfg.Lon)
+	case "rain":
+		lines, trivial, err = rain.Fetch(cfg.Lat, cfg.Lon)
+	case "season":
+		lines = season.Format(time.Now())
+	case "tearoff":
+		lines = tearoff.Format(time.Now())
+	case "holiday":
+		lines, trivial, err = holiday.Fetch(cfg.Lat, cfg.Lon)
+	case "satellites":
+		lines, trivial, err = satellites.Fetch(cfg.Lat, cfg.Lon)
+	default:
+		log.Printf("daemon: unknown command %q", cmd)
+		return
+	}
+
+	if err != nil {
+		log.Printf("daemon: %s error: %v", cmd, err)
+		return
+	}
+	if trivial && skipTrivial {
+		log.Printf("daemon: %s skipped (trivial)", cmd)
+		return
+	}
+
+	client := vestaboard.New(cfg.Token)
+	if err := client.SendLines(lines); err != nil {
+		log.Printf("daemon: %s send error: %v", cmd, err)
+		return
+	}
+	log.Printf("daemon: %s sent", cmd)
 }
 
 func main() {
@@ -293,6 +471,10 @@ func main() {
 		return
 	}
 
+	if cmd == "daemon" {
+		runDaemon(cfg)
+		return
+	}
 
 	if cfg.Token == "" {
 		fmt.Fprintf(os.Stderr, "error: token is required in config.yaml\n")

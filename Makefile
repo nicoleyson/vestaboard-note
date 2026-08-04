@@ -6,8 +6,11 @@ VESTABOARD_DIR ?= $(shell pwd)
 NOTE_BIN       ?= $(VESTABOARD_DIR)/$(BIN)
 GIT_SHA        := $(shell git rev-parse --short HEAD 2>/dev/null || echo dev)
 
+SYSTEMD_USER_DIR := $(HOME)/.config/systemd/user
+
 .PHONY: build install uninstall run-weather run-clock run-calendar tidy lint status \
-        cron cron-init cron-update cron-uninstall _cron-render _cron-apply
+        cron cron-init cron-update cron-uninstall _cron-render _cron-apply \
+        config-init daemon daemon-uninstall
 
 # ── Build ────────────────────────────────────────────────────────────────────
 
@@ -96,3 +99,33 @@ cron-uninstall:
 	  | awk '/# BEGIN VESTABOARD/{found=1} !found{print} /# END VESTABOARD/{found=0}' \
 	) | crontab -
 	@echo "Removed vestaboard block from crontab"
+
+# ── Config ────────────────────────────────────────────────────────────────────
+
+config-init:
+	@if [ -f config.yaml ]; then \
+	  echo "config.yaml already exists. Remove it first to re-initialize."; exit 1; \
+	fi
+	cp config.yaml.example config.yaml
+	@echo "Created config.yaml from config.yaml.example — edit it to add your token and location."
+
+# ── Daemon (systemd user service) ─────────────────────────────────────────────
+# make daemon          — install and start the systemd user service
+# make daemon-uninstall — stop and remove the service
+
+daemon: build
+	@mkdir -p $(SYSTEMD_USER_DIR)
+	@printf '[Unit]\nDescription=Vestaboard Note Daemon\nAfter=network.target\n\n[Service]\nType=simple\nWorkingDirectory=$(VESTABOARD_DIR)\nExecStart=$(NOTE_BIN) daemon\nRestart=on-failure\nRestartSec=10\n\n[Install]\nWantedBy=default.target\n' \
+	  > $(SYSTEMD_USER_DIR)/vestaboard.service
+	systemctl --user daemon-reload
+	systemctl --user enable vestaboard
+	systemctl --user start vestaboard
+	@echo "Daemon installed and started. Check status with: systemctl --user status vestaboard"
+	@echo "View logs with: journalctl --user -u vestaboard -f"
+
+daemon-uninstall:
+	systemctl --user stop vestaboard 2>/dev/null || true
+	systemctl --user disable vestaboard 2>/dev/null || true
+	rm -f $(SYSTEMD_USER_DIR)/vestaboard.service
+	systemctl --user daemon-reload
+	@echo "Daemon removed."

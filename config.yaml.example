@@ -11,3 +11,66 @@ countdowns:
     date: "2027-07-04T00:00:00Z"
   - label: CONCERT
     date: "2027-08-15T20:00:00Z"
+
+# Timezone for the daemon scheduler. Must be a valid IANA timezone name.
+# See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+# If omitted, the system local timezone is used.
+timezone: America/Los_Angeles
+
+# Schedule for 'note daemon'. If omitted, the built-in default schedule is used.
+# Each entry runs the given subcommand at the specified local time.
+# repeat_minutes + until_hour: repeat every N minutes from hour until until_hour (inclusive).
+# args: extra flags passed to the subcommand (e.g. --skip-trivial).
+schedule:
+  - command: weather
+    hour: 8
+    minute: 0
+    repeat_minutes: 30
+    until_hour: 19
+  - command: uv
+    hour: 9
+    minute: 0
+    args: [--skip-trivial]
+  - command: pollen
+    hour: 11
+    minute: 0
+    args: [--skip-trivial]
+  - command: rain
+    hour: 12
+    minute: 0
+    args: [--skip-trivial]
+  - command: calendar
+    hour: 13
+    minute: 0
+  - command: season
+    hour: 15
+    minute: 0
+  - command: holiday
+    hour: 16
+    minute: 0
+  - command: air
+    hour: 17
+    minute: 0
+    args: [--skip-trivial]
+  - command: suntime
+    hour: 18
+    minute: 0
+  - command: satellites
+    hour: 19
+    minute: 0
+    args: [--skip-trivial]
+  - command: holiday
+    hour: 20
+    minute: 0
+  - command: moonphase
+    hour: 21
+    minute: 0
+  - command: season
+    hour: 22
+    minute: 0
+  - command: tearoff
+    hour: 23
+    minute: 0
+  - command: tearoff
+    hour: 0
+    minute: 0
