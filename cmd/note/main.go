@@ -44,10 +44,6 @@ type config struct {
 	Countdowns      []countdown.Event `yaml:"countdowns"`
 	DiscogsToken    string            `yaml:"discogs_token"`
 	DiscogsUsername string            `yaml:"discogs_username"`
-	QuietHours      struct {
-		Start int `yaml:"start"`
-		End   int `yaml:"end"`
-	} `yaml:"quiet_hours"`
 }
 
 func loadConfig() (config, error) {
@@ -282,19 +278,6 @@ func main() {
 		return
 	}
 
-	if cfg.QuietHours.Start != cfg.QuietHours.End {
-		h := time.Now().Hour()
-		start, end := cfg.QuietHours.Start, cfg.QuietHours.End
-		inQuiet := false
-		if start < end {
-			inQuiet = h >= start && h < end
-		} else {
-			inQuiet = h >= start || h < end
-		}
-		if inQuiet {
-			return
-		}
-	}
 
 	if cfg.Token == "" {
 		fmt.Fprintf(os.Stderr, "error: token is required in config.yaml\n")

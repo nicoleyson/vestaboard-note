@@ -1,13 +1,13 @@
 VESTABOARD_DIR={{VESTABOARD_DIR}}
 VESTABOARD_LOG={{VESTABOARD_DIR}}/vestaboard.log
 PATH=/usr/local/bin:/usr/bin:/bin
+TZ=America/Los_Angeles
 
-# Quiet hours are enforced by the binary via quiet_hours in config.yaml —
-# jobs outside active hours exit silently. The server OS timezone must be
-# set correctly (e.g. sudo timedatectl set-timezone America/Los_Angeles)
-# so that cron hour values and the binary's time.Now() agree.
+# Rain, pollen, and air quality skip posting when levels are trivial if --skip-trivial is passed.
+# Run manually without the flag to always send (good for testing).
+# All output is logged to $VESTABOARD_LOG — tail -f it to watch live.
 
-# ── Weather (every 30 min, 8am–7:30pm) ───────────────────────────
+# ── Weather (daytime backbone, 8am–7:30pm) ───────────────────────
 */30 8-19 * * * {{USER}}cd $VESTABOARD_DIR && echo "$(date '+\%Y-\%m-\%d \%H:\%M') weather" >> $VESTABOARD_LOG && {{NOTE_BIN}} weather >> $VESTABOARD_LOG 2>&1
 
 # ── Morning ───────────────────────────────────────────────────────
