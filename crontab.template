@@ -2,6 +2,7 @@ VESTABOARD_DIR={{VESTABOARD_DIR}}
 VESTABOARD_LOG={{VESTABOARD_DIR}}/vestaboard.log
 PATH=/usr/local/bin:/usr/bin:/bin
 TZ=America/Los_Angeles
+CRON_TZ=America/Los_Angeles
 
 # Rain, pollen, and air quality skip posting when levels are trivial if --skip-trivial is passed.
 # Run manually without the flag to always send (good for testing).
