@@ -236,8 +236,17 @@ complete -c note -n __fish_use_subcommand -a completion -d 'Print shell completi
 complete -c note -n '__fish_seen_subcommand_from pattern' -a 'current random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow'
 complete -c note -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish'`
 
+func logInvocation(cmd string, cfg config) {
+	source := "manual"
+	if fi, err := os.Stdin.Stat(); err == nil && (fi.Mode()&os.ModeCharDevice) == 0 {
+		source = "cron"
+	}
+	host, _ := os.Hostname()
+	fmt.Fprintf(os.Stderr, "note %s %s %s@%s lat=%.2f lon=%.2f\n",
+		version, cmd, source, host, cfg.Lat, cfg.Lon)
+}
+
 func main() {
-	fmt.Fprintf(os.Stderr, "note %s\n", version)
 	if len(os.Args) < 2 {
 		fmt.Fprintf(os.Stderr, "usage: note <%s>\n", strings.Join(subcommands, "|"))
 		os.Exit(1)
@@ -276,6 +285,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
+
+	logInvocation(cmd, cfg)
 
 	if cmd == "status" {
 		runStatus(cfg)
