@@ -13,6 +13,7 @@ PATH=/usr/local/bin:/usr/bin:/bin
 
 # ── Morning ───────────────────────────────────────────────────────
 0  9 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') uv" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} uv --skip-trivial >> {{VESTABOARD_LOG}} 2>&1
+0 10 * * 1 cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') weekprogress" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} weekprogress >> {{VESTABOARD_LOG}} 2>&1
 0 11 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') pollen" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} pollen --skip-trivial >> {{VESTABOARD_LOG}} 2>&1
 0 12 * * * cd {{VESTABOARD_DIR}} && echo "$(date '+%Y-%m-%d %H:%M %Z') rain" >> {{VESTABOARD_LOG}} && {{NOTE_BIN}} rain --skip-trivial >> {{VESTABOARD_LOG}} 2>&1
 

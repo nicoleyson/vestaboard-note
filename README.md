@@ -56,6 +56,7 @@ Or use cron if you prefer — see [Scheduling with cron](#scheduling-with-cron) 
 | `countdown` | Days until a configured event | `countdowns` in config |
 | `discogs` | A record from your collection matched to current weather and time of day | `discogs_username`, `discogs_token`, `lat`, `lon` |
 | `tearoff` | Tear-off calendar showing today's date | — |
+| `weekprogress` | Week progress bar — green tiles advance Mon–Sun, day name centered | — |
 | `pattern` | Color art — stripes, checker, hearts, confetti, rainbow, and more. `pattern current` picks a seasonal or holiday-aware palette | — |
 | `daemon` | Run the full schedule continuously as a background process | `timezone` in config |
 | `status` | Preview all subcommands without sending anything to the board | — |

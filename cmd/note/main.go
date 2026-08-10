@@ -28,6 +28,7 @@ import (
 	"github.com/nicoleyson/vestaboard-note/internal/uv"
 	"github.com/nicoleyson/vestaboard-note/internal/vestaboard"
 	"github.com/nicoleyson/vestaboard-note/internal/weather"
+	"github.com/nicoleyson/vestaboard-note/internal/weekprogress"
 )
 
 // version is set at build time via -ldflags "-X main.version=<git-sha>"
@@ -37,7 +38,7 @@ var subcommands = []string{
 	"weather", "clock", "calendar", "moonphase", "air",
 	"flights", "countdown", "discogs", "pattern",
 	"suntime", "sunscene", "pollen", "uv", "rain", "season", "holiday", "satellites", "tearoff",
-	"daemon", "status", "completion",
+	"weekprogress", "daemon", "status", "completion",
 }
 
 // scheduleEntry defines one scheduled job in config.yaml.
@@ -167,12 +168,13 @@ func runStatus(cfg config) {
 
 	printLines("pattern", pattern.Random(), nil)
 	printLines("tearoff", tearoff.Format(now), nil)
+	printLines("weekprogress", weekprogress.Format(now), nil)
 }
 
 const bashCompletion = `_note_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local cmds="weather clock calendar moonphase air flights countdown discogs pattern suntime sunscene pollen uv rain season holiday satellites tearoff daemon status completion"
+    local cmds="weather clock calendar moonphase air flights countdown discogs pattern suntime sunscene pollen uv rain season holiday satellites tearoff weekprogress daemon status completion"
     local patterns="current random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow"
     if [[ "${prev}" == "pattern" ]]; then
         COMPREPLY=($(compgen -W "${patterns}" -- "${cur}"))
@@ -206,6 +208,7 @@ _note() {
         'holiday:today'"'"'s public holiday by location'
         'satellites:notable satellites currently overhead'
         'tearoff:tear-off calendar showing today'"'"'s date'
+        'weekprogress:week progress bar with day name'
         'daemon:run scheduled jobs continuously'
         'status:preview all subcommands without sending'
         'completion:print shell completion script'
@@ -252,7 +255,8 @@ complete -c note -n __fish_use_subcommand -a rain       -d 'Precipitation level 
 complete -c note -n __fish_use_subcommand -a season     -d 'Current astronomical season with color'
 complete -c note -n __fish_use_subcommand -a holiday    -d 'Today'"'"'s public holiday by location'
 complete -c note -n __fish_use_subcommand -a satellites -d 'Notable satellites currently overhead'
-complete -c note -n __fish_use_subcommand -a tearoff    -d 'Tear-off calendar showing today'"'"'s date'
+complete -c note -n __fish_use_subcommand -a tearoff      -d 'Tear-off calendar showing today'"'"'s date'
+complete -c note -n __fish_use_subcommand -a weekprogress -d 'Week progress bar with day name'
 complete -c note -n __fish_use_subcommand -a daemon     -d 'Run scheduled jobs continuously'
 complete -c note -n __fish_use_subcommand -a status     -d 'Preview all subcommands without sending'
 complete -c note -n __fish_use_subcommand -a completion -d 'Print shell completion script'
@@ -272,6 +276,7 @@ func logInvocation(cmd string, cfg config) {
 var defaultSchedule = []scheduleEntry{
 	{Command: "weather", Hour: 8, Minute: 0, RepeatMinutes: 30, UntilHour: 19},
 	{Command: "uv", Hour: 9, Minute: 0, Args: []string{"--skip-trivial"}},
+	{Command: "weekprogress", Hour: 10, Minute: 0},
 	{Command: "pollen", Hour: 11, Minute: 0, Args: []string{"--skip-trivial"}},
 	{Command: "rain", Hour: 12, Minute: 0, Args: []string{"--skip-trivial"}},
 	{Command: "calendar", Hour: 13, Minute: 0},
@@ -398,10 +403,8 @@ func runCommand(cmd string, args []string, cfg config) {
 		lines = season.Format(time.Now())
 	case "tearoff":
 		lines = tearoff.Format(time.Now())
-	case "holiday":
-		lines, trivial, err = holiday.Fetch(cfg.Lat, cfg.Lon)
-	case "satellites":
-		lines, trivial, err = satellites.Fetch(cfg.Lat, cfg.Lon)
+	case "weekprogress":
+		lines = weekprogress.Format(time.Now())
 	default:
 		log.Printf("daemon: unknown command %q", cmd)
 		return
@@ -576,6 +579,8 @@ func main() {
 		lines = season.Format(time.Now())
 	case "tearoff":
 		lines = tearoff.Format(time.Now())
+	case "weekprogress":
+		lines = weekprogress.Format(time.Now())
 	case "holiday":
 		if cfg.Lat == 0 || cfg.Lon == 0 {
 			fmt.Fprintf(os.Stderr, "error: lat and lon required for holiday\n")
