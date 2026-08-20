@@ -50,6 +50,7 @@ Or use cron if you prefer — see [Scheduling with cron](#scheduling-with-cron) 
 | `uv` | UV index with color scale | `lat`, `lon` |
 | `rain` | Precipitation level and intensity | `lat`, `lon` |
 | `pollen` | Pollen level and dominant type (grass / tree / weed) | `lat`, `lon` |
+| `dewpoint` | Dew point °F, relative humidity %, and comfort label (DRY → OPPRESSIVE) | `lat`, `lon` |
 | `flights` | Aircraft currently overhead — callsign, origin, altitude | `lat`, `lon` |
 | `satellites` | Notable satellite overhead — ISS, GPS, Iridium — with elevation and direction | `lat`, `lon` |
 | `holiday` | Today's public holiday by location (200+ countries via Nager.Date) | `lat`, `lon` |
@@ -63,7 +64,7 @@ Or use cron if you prefer — see [Scheduling with cron](#scheduling-with-cron) 
 
 ### Trivial-skip flag
 
-`rain`, `air`, `pollen`, `flights`, `holiday`, and `satellites` support `--skip-trivial`. When the data is unremarkable (no rain, good air quality, clear skies, no holiday today), the subcommand exits without sending. The daemon uses this automatically for the appropriate jobs.
+`rain`, `air`, `pollen`, `dewpoint`, `flights`, `holiday`, and `satellites` support `--skip-trivial`. When the data is unremarkable (no rain, good air quality, clear skies, no holiday today), the subcommand exits without sending. The daemon uses this automatically for the appropriate jobs.
 
 ```sh
 ./note rain --skip-trivial      # only sends if it's actually raining
@@ -193,7 +194,7 @@ Everything is free. Most require no account.
 | Subcommand | Source |
 |---|---|
 | weather | [aviationweather.gov](https://aviationweather.gov/) METAR (no key) |
-| air, uv, rain, pollen | [Open-Meteo](https://open-meteo.com/) (no key) |
+| air, uv, rain, pollen, dewpoint | [Open-Meteo](https://open-meteo.com/) (no key) |
 | suntime, sunscene | [sunrise-sunset.org](https://sunrise-sunset.org/api) (no key) |
 | flights | [OpenSky Network](https://opensky-network.org/) (no key) |
 | satellites | [Satlas](https://satlas.app/) (no key) |
