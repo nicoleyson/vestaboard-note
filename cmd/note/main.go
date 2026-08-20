@@ -11,6 +11,7 @@ import (
 
 	"github.com/nicoleyson/vestaboard-note/internal/air"
 	"github.com/nicoleyson/vestaboard-note/internal/calendar"
+	"github.com/nicoleyson/vestaboard-note/internal/dewpoint"
 	"github.com/nicoleyson/vestaboard-note/internal/clock"
 	"github.com/nicoleyson/vestaboard-note/internal/countdown"
 	"github.com/nicoleyson/vestaboard-note/internal/discogs"
@@ -38,7 +39,7 @@ var subcommands = []string{
 	"weather", "clock", "calendar", "moonphase", "air",
 	"flights", "countdown", "discogs", "pattern",
 	"suntime", "sunscene", "pollen", "uv", "rain", "season", "holiday", "satellites", "tearoff",
-	"weekprogress", "daemon", "status", "completion",
+	"weekprogress", "dewpoint", "daemon", "status", "completion",
 }
 
 // scheduleEntry defines one scheduled job in config.yaml.
@@ -140,6 +141,9 @@ func runStatus(cfg config) {
 		lines, _, err = rain.Fetch(cfg.Lat, cfg.Lon)
 		printLines("rain", lines, err)
 
+		lines, _, err = dewpoint.Fetch(cfg.Lat, cfg.Lon)
+		printLines("dewpoint", lines, err)
+
 		lines, _, err = holiday.Fetch(cfg.Lat, cfg.Lon)
 		printLines("holiday", lines, err)
 
@@ -153,6 +157,7 @@ func runStatus(cfg config) {
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "pollen")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "uv")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "rain")
+		fmt.Printf("  %-12s skipped (no lat/lon)\n", "dewpoint")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "holiday")
 		fmt.Printf("  %-12s skipped (no lat/lon)\n", "satellites")
 	}
@@ -174,7 +179,7 @@ func runStatus(cfg config) {
 const bashCompletion = `_note_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local cmds="weather clock calendar moonphase air flights countdown discogs pattern suntime sunscene pollen uv rain season holiday satellites tearoff weekprogress daemon status completion"
+    local cmds="weather clock calendar moonphase air flights countdown discogs pattern suntime sunscene pollen uv rain season holiday satellites tearoff weekprogress dewpoint daemon status completion"
     local patterns="current random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow"
     if [[ "${prev}" == "pattern" ]]; then
         COMPREPLY=($(compgen -W "${patterns}" -- "${cur}"))
@@ -209,6 +214,7 @@ _note() {
         'satellites:notable satellites currently overhead'
         'tearoff:tear-off calendar showing today'"'"'s date'
         'weekprogress:week progress bar with day name'
+        'dewpoint:dew point and relative humidity with comfort label'
         'daemon:run scheduled jobs continuously'
         'status:preview all subcommands without sending'
         'completion:print shell completion script'
@@ -257,6 +263,7 @@ complete -c note -n __fish_use_subcommand -a holiday    -d 'Today'"'"'s public h
 complete -c note -n __fish_use_subcommand -a satellites -d 'Notable satellites currently overhead'
 complete -c note -n __fish_use_subcommand -a tearoff      -d 'Tear-off calendar showing today'"'"'s date'
 complete -c note -n __fish_use_subcommand -a weekprogress -d 'Week progress bar with day name'
+complete -c note -n __fish_use_subcommand -a dewpoint    -d 'Dew point and relative humidity'
 complete -c note -n __fish_use_subcommand -a daemon     -d 'Run scheduled jobs continuously'
 complete -c note -n __fish_use_subcommand -a status     -d 'Preview all subcommands without sending'
 complete -c note -n __fish_use_subcommand -a completion -d 'Print shell completion script'
@@ -399,6 +406,8 @@ func runCommand(cmd string, args []string, cfg config) {
 		lines, err = uv.Fetch(cfg.Lat, cfg.Lon)
 	case "rain":
 		lines, trivial, err = rain.Fetch(cfg.Lat, cfg.Lon)
+	case "dewpoint":
+		lines, trivial, err = dewpoint.Fetch(cfg.Lat, cfg.Lon)
 	case "season":
 		lines = season.Format(time.Now())
 	case "tearoff":
@@ -575,6 +584,12 @@ func main() {
 			os.Exit(1)
 		}
 		lines, trivial, err = rain.Fetch(cfg.Lat, cfg.Lon)
+	case "dewpoint":
+		if cfg.Lat == 0 || cfg.Lon == 0 {
+			fmt.Fprintf(os.Stderr, "error: lat and lon required for dewpoint\n")
+			os.Exit(1)
+		}
+		lines, trivial, err = dewpoint.Fetch(cfg.Lat, cfg.Lon)
 	case "season":
 		lines = season.Format(time.Now())
 	case "tearoff":
