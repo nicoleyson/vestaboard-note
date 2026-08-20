@@ -287,6 +287,7 @@ var defaultSchedule = []scheduleEntry{
 	{Command: "pollen", Hour: 11, Minute: 0, Args: []string{"--skip-trivial"}},
 	{Command: "rain", Hour: 12, Minute: 0, Args: []string{"--skip-trivial"}},
 	{Command: "calendar", Hour: 13, Minute: 0},
+	{Command: "dewpoint", Hour: 14, Minute: 0, Args: []string{"--skip-trivial"}},
 	{Command: "season", Hour: 15, Minute: 0},
 	{Command: "holiday", Hour: 16, Minute: 0},
 	{Command: "air", Hour: 17, Minute: 0, Args: []string{"--skip-trivial"}},
