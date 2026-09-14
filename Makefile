@@ -117,6 +117,7 @@ daemon: build
 	@mkdir -p $(SYSTEMD_USER_DIR)
 	@printf '[Unit]\nDescription=Vestaboard Note Daemon\nAfter=network.target\n\n[Service]\nType=simple\nWorkingDirectory=$(VESTABOARD_DIR)\nExecStart=$(NOTE_BIN) daemon\nRestart=on-failure\nRestartSec=10\n\n[Install]\nWantedBy=default.target\n' \
 	  > $(SYSTEMD_USER_DIR)/vestaboard.service
+	loginctl enable-linger $(USER)
 	systemctl --user daemon-reload
 	systemctl --user enable vestaboard
 	systemctl --user start vestaboard

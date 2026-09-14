@@ -28,7 +28,7 @@ make build
 
 **4. Run the daemon**
 ```sh
-make daemon          # builds, installs, and starts as a systemd user service
+make daemon          # builds, installs, enables linger, and starts as a systemd user service
 ```
 
 Or use cron if you prefer — see [Scheduling with cron](#scheduling-with-cron) below.
@@ -76,6 +76,8 @@ Or use cron if you prefer — see [Scheduling with cron](#scheduling-with-cron) 
 ## Daemon
 
 The daemon runs continuously, waking up each minute to check the schedule and fire jobs at the right local time. Timezone is configured in `config.yaml` — no server timezone setup required.
+
+> **Note**: `make daemon` automatically runs `loginctl enable-linger` so the daemon survives SSH logouts and server reboots. Without linger, systemd user services only run while you're logged in.
 
 ```sh
 make daemon          # install and start as a systemd user service (Linux)
