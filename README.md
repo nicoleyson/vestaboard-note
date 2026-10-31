@@ -61,6 +61,7 @@ Or use cron if you prefer — see [Scheduling with cron](#scheduling-with-cron) 
 | `pattern` | Color art — stripes, checker, hearts, confetti, rainbow, and more. `pattern current` picks a seasonal or holiday-aware palette | — |
 | `daemon` | Run the full schedule continuously as a background process | `timezone` in config |
 | `status` | Preview all subcommands without sending anything to the board | — |
+| `movie [duration]` | Pause scheduled display updates (defaults to 2 hours); use `movie off` to resume or `movie status` to check | — |
 
 ### Trivial-skip flag
 
@@ -96,6 +97,23 @@ To deploy an update:
 ```sh
 git pull && make build && make daemon
 ```
+
+---
+
+## Movie mode
+
+Pause all scheduled updates for a while without changing your schedule:
+
+```sh
+note movie          # pause for 2 hours
+note movie 90m      # pause for 90 minutes (Go duration syntax)
+note movie status   # see when the pause ends
+note movie off      # resume scheduled updates now
+```
+
+The pause is stored alongside `config.yaml`, so the daemon and cron jobs see the same state. For a phone-friendly trigger, create an iOS Shortcut that runs `ssh user@your-server 'cd /path/to/vestaboard-note && ./note movie 2h'`; create a second shortcut with `movie off` to resume early. This requires SSH access from the phone.
+
+On a detected public holiday for your configured location, scheduled jobs and manual display commands show the holiday sign instead of their usual content. On normal days, commands work as usual. If holiday lookup fails, the requested display command runs normally.
 
 ---
 
@@ -204,4 +222,3 @@ Everything is free. Most require no account.
 | calendar | iCal secret URL (your Google/iCloud/Outlook calendar) |
 | discogs | [Discogs API](https://www.discogs.com/developers) (free token) |
 | moonphase, season, countdown, tearoff, clock, pattern | local math only |
-

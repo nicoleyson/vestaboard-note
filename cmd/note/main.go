@@ -4,16 +4,18 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"gopkg.in/yaml.v3"
 
 	"github.com/nicoleyson/vestaboard-note/internal/air"
 	"github.com/nicoleyson/vestaboard-note/internal/calendar"
-	"github.com/nicoleyson/vestaboard-note/internal/dewpoint"
 	"github.com/nicoleyson/vestaboard-note/internal/clock"
 	"github.com/nicoleyson/vestaboard-note/internal/countdown"
+	"github.com/nicoleyson/vestaboard-note/internal/dewpoint"
 	"github.com/nicoleyson/vestaboard-note/internal/discogs"
 	"github.com/nicoleyson/vestaboard-note/internal/flights"
 	"github.com/nicoleyson/vestaboard-note/internal/holiday"
@@ -39,7 +41,7 @@ var subcommands = []string{
 	"weather", "clock", "calendar", "moonphase", "air",
 	"flights", "countdown", "discogs", "pattern",
 	"suntime", "sunscene", "pollen", "uv", "rain", "season", "holiday", "satellites", "tearoff",
-	"weekprogress", "dewpoint", "daemon", "status", "completion",
+	"weekprogress", "dewpoint", "daemon", "status", "completion", "movie",
 }
 
 // scheduleEntry defines one scheduled job in config.yaml.
@@ -61,15 +63,15 @@ type scheduleEntry struct {
 }
 
 type config struct {
-	Token           string          `yaml:"token"`
-	Lat             float64         `yaml:"lat"`
-	Lon             float64         `yaml:"lon"`
-	ICalURLs        []string        `yaml:"ical_urls"`
+	Token           string            `yaml:"token"`
+	Lat             float64           `yaml:"lat"`
+	Lon             float64           `yaml:"lon"`
+	ICalURLs        []string          `yaml:"ical_urls"`
 	Countdowns      []countdown.Event `yaml:"countdowns"`
-	DiscogsToken    string          `yaml:"discogs_token"`
-	DiscogsUsername string          `yaml:"discogs_username"`
-	Timezone        string          `yaml:"timezone"`
-	Schedule        []scheduleEntry `yaml:"schedule"`
+	DiscogsToken    string            `yaml:"discogs_token"`
+	DiscogsUsername string            `yaml:"discogs_username"`
+	Timezone        string            `yaml:"timezone"`
+	Schedule        []scheduleEntry   `yaml:"schedule"`
 }
 
 func loadConfig() (config, error) {
@@ -179,7 +181,7 @@ func runStatus(cfg config) {
 const bashCompletion = `_note_completions() {
     local cur="${COMP_WORDS[COMP_CWORD]}"
     local prev="${COMP_WORDS[COMP_CWORD-1]}"
-    local cmds="weather clock calendar moonphase air flights countdown discogs pattern suntime sunscene pollen uv rain season holiday satellites tearoff weekprogress dewpoint daemon status completion"
+    local cmds="weather clock calendar moonphase air flights countdown discogs pattern suntime sunscene pollen uv rain season holiday satellites tearoff weekprogress dewpoint daemon status completion movie"
     local patterns="current random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow"
     if [[ "${prev}" == "pattern" ]]; then
         COMPREPLY=($(compgen -W "${patterns}" -- "${cur}"))
@@ -216,6 +218,7 @@ _note() {
         'weekprogress:week progress bar with day name'
         'dewpoint:dew point and relative humidity with comfort label'
         'daemon:run scheduled jobs continuously'
+        'movie:pause automatic display updates temporarily'
         'status:preview all subcommands without sending'
         'completion:print shell completion script'
     )
@@ -265,6 +268,7 @@ complete -c note -n __fish_use_subcommand -a tearoff      -d 'Tear-off calendar 
 complete -c note -n __fish_use_subcommand -a weekprogress -d 'Week progress bar with day name'
 complete -c note -n __fish_use_subcommand -a dewpoint    -d 'Dew point and relative humidity'
 complete -c note -n __fish_use_subcommand -a daemon     -d 'Run scheduled jobs continuously'
+complete -c note -n __fish_use_subcommand -a movie      -d 'Pause automatic display updates temporarily'
 complete -c note -n __fish_use_subcommand -a status     -d 'Preview all subcommands without sending'
 complete -c note -n __fish_use_subcommand -a completion -d 'Print shell completion script'
 complete -c note -n '__fish_seen_subcommand_from pattern' -a 'current random stripes checker bars fade diagonal hearts confetti sparkle pulse rainbow'
@@ -367,6 +371,12 @@ func cleanupFired(fired map[string]time.Time, now time.Time) {
 }
 
 func runCommand(cmd string, args []string, cfg config) {
+	if cmd != "movie" {
+		if until, active := movieModeUntil(); active {
+			log.Printf("daemon: %s skipped (movie mode until %s)", cmd, until.Format(time.RFC3339))
+			return
+		}
+	}
 	skipTrivial := false
 	for _, a := range args {
 		if a == "--skip-trivial" {
@@ -428,6 +438,12 @@ func runCommand(cmd string, args []string, cfg config) {
 		log.Printf("daemon: %s skipped (trivial)", cmd)
 		return
 	}
+	if cmd != "holiday" {
+		if holidayLines, active, err := todaysHoliday(cfg); err == nil && active {
+			lines = holidayLines
+			log.Printf("daemon: holiday today; showing holiday sign instead of %s", cmd)
+		}
+	}
 
 	client := vestaboard.New(cfg.Token)
 	if err := client.SendLines(lines); err != nil {
@@ -435,6 +451,85 @@ func runCommand(cmd string, args []string, cfg config) {
 		return
 	}
 	log.Printf("daemon: %s sent", cmd)
+}
+
+var holidayCache struct {
+	sync.Mutex
+	date     string
+	lat, lon float64
+	lines    [3]string
+	active   bool
+	valid    bool
+}
+
+func todaysHoliday(cfg config) ([3]string, bool, error) {
+	date := time.Now().Format("2006-01-02")
+	holidayCache.Lock()
+	defer holidayCache.Unlock()
+	if holidayCache.valid && holidayCache.date == date && holidayCache.lat == cfg.Lat && holidayCache.lon == cfg.Lon {
+		return holidayCache.lines, holidayCache.active, nil
+	}
+	lines, trivial, err := holiday.Fetch(cfg.Lat, cfg.Lon)
+	if err != nil {
+		return [3]string{}, false, err
+	}
+	holidayCache.date = date
+	holidayCache.lat = cfg.Lat
+	holidayCache.lon = cfg.Lon
+	holidayCache.lines = lines
+	holidayCache.active = !trivial
+	holidayCache.valid = true
+	return lines, !trivial, nil
+}
+
+func movieModePath() string {
+	configPath := os.Getenv("VESTABOARD_CONFIG")
+	if configPath == "" {
+		configPath = "config.yaml"
+	}
+	return filepath.Join(filepath.Dir(configPath), ".movie-mode-until")
+}
+
+func movieModeUntil() (time.Time, bool) {
+	data, err := os.ReadFile(movieModePath())
+	if err != nil {
+		return time.Time{}, false
+	}
+	until, err := time.Parse(time.RFC3339, strings.TrimSpace(string(data)))
+	return until, err == nil && time.Now().Before(until)
+}
+
+func runMovie(args []string) {
+	path := movieModePath()
+	if len(args) > 0 && args[0] == "off" {
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			log.Fatalf("movie: clear mode: %v", err)
+		}
+		fmt.Println("Movie mode off; scheduled display updates are enabled.")
+		return
+	}
+	if len(args) > 0 && args[0] == "status" {
+		if until, active := movieModeUntil(); active {
+			fmt.Printf("Movie mode on until %s.\n", until.Local().Format(time.RFC1123))
+		} else {
+			fmt.Println("Movie mode off.")
+		}
+		return
+	}
+	duration := 2 * time.Hour
+	if len(args) > 0 {
+		var err error
+		duration, err = time.ParseDuration(args[0])
+		if err != nil || duration <= 0 {
+			fmt.Fprintln(os.Stderr, "usage: note movie [duration (e.g. 2h, 90m) | off | status]")
+			os.Exit(1)
+		}
+	}
+	until := time.Now().Add(duration)
+	if err := os.WriteFile(path, []byte(until.Format(time.RFC3339)+"\n"), 0600); err != nil {
+		log.Fatalf("movie: save mode: %v", err)
+	}
+	fmt.Printf("Movie mode on for %s, until %s.\n", duration, until.Local().Format(time.RFC1123))
 }
 
 func main() {
@@ -470,6 +565,10 @@ func main() {
 		}
 		return
 	}
+	if cmd == "movie" {
+		runMovie(os.Args[2:])
+		return
+	}
 
 	cfg, err := loadConfig()
 	if err != nil {
@@ -492,6 +591,10 @@ func main() {
 	if cfg.Token == "" {
 		fmt.Fprintf(os.Stderr, "error: token is required in config.yaml\n")
 		os.Exit(1)
+	}
+	if until, active := movieModeUntil(); active {
+		fmt.Printf("movie mode is on until %s; %s skipped\n", until.Local().Format(time.RFC1123), cmd)
+		return
 	}
 
 	var lines [3]string
@@ -621,6 +724,12 @@ func main() {
 
 	if trivial && skipTrivial {
 		return
+	}
+	if cmd != "holiday" {
+		if holidayLines, active, holidayErr := todaysHoliday(cfg); holidayErr == nil && active {
+			lines = holidayLines
+			fmt.Printf("Holiday today; showing holiday sign instead of %s.\n", cmd)
+		}
 	}
 
 	client := vestaboard.New(cfg.Token)
