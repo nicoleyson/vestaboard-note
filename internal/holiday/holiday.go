@@ -81,11 +81,35 @@ func findToday(holidays []nagerHoliday, today string) string {
 	return ""
 }
 
-func observanceToday(now time.Time) string {
+func observanceToday(now time.Time, country string) string {
 	if now.Month() == time.October && now.Day() == 31 {
 		return "Halloween"
 	}
+	if country != "US" {
+		return ""
+	}
+	switch {
+	case now.Month() == time.February && now.Day() == 2:
+		return "Groundhog Day"
+	case now.Month() == time.February && now.Day() == 14:
+		return "Valentine's Day"
+	case now.Month() == time.March && now.Day() == 17:
+		return "St. Patrick's Day"
+	case now.Month() == time.May && nthWeekdayOfMonth(now, time.Sunday) == 2:
+		return "Mother's Day"
+	case now.Month() == time.June && nthWeekdayOfMonth(now, time.Sunday) == 3:
+		return "Father's Day"
+	case now.Month() == time.November && now.Weekday() == time.Thursday && (now.Day()-1)/7+1 == 4:
+		return "Thanksgiving"
+	}
 	return ""
+}
+
+func nthWeekdayOfMonth(date time.Time, weekday time.Weekday) int {
+	if date.Weekday() != weekday {
+		return 0
+	}
+	return (date.Day()-1)/7 + 1
 }
 
 func findNext(holidays []nagerHoliday, after string) (name string, days int) {
@@ -235,6 +259,15 @@ func wrapRows(name string) (row2, row3 string) {
 	return
 }
 
+func holidaySign(name string) [3]string {
+	decoration := artStrip(name)
+	row2, row3 := wrapRows(name)
+	if row3 == "" {
+		row3 = decoration
+	}
+	return [3]string{decoration, row2, row3}
+}
+
 func TodaysName(lat, lon float64) string {
 	code, err := countryCode(lat, lon)
 	if err != nil {
@@ -250,14 +283,16 @@ func TodaysName(lat, lon float64) string {
 func Fetch(lat, lon float64) ([3]string, bool, error) {
 	now := time.Now()
 	today := now.Format("2006-01-02")
-	if name := observanceToday(now); name != "" {
-		row2, row3 := wrapRows(name)
-		return [3]string{artStrip(name), row2, row3}, false, nil
+	if name := observanceToday(now, ""); name != "" {
+		return holidaySign(name), false, nil
 	}
 
 	code, err := countryCode(lat, lon)
 	if err != nil {
 		return [3]string{}, false, err
+	}
+	if name := observanceToday(now, code); name != "" {
+		return holidaySign(name), false, nil
 	}
 
 	holidays, err := fetchHolidays(code, now.Year())
@@ -266,8 +301,7 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 	}
 
 	if name := findToday(holidays, today); name != "" {
-		row2, row3 := wrapRows(name)
-		return [3]string{artStrip(name), row2, row3}, false, nil
+		return holidaySign(name), false, nil
 	}
 
 	nextName, days := findNext(holidays, today)

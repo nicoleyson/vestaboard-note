@@ -35,16 +35,42 @@ func TestFindToday_empty(t *testing.T) {
 }
 
 func TestObservanceToday_halloween(t *testing.T) {
-	got := observanceToday(time.Date(2026, time.October, 31, 12, 0, 0, 0, time.UTC))
+	got := observanceToday(time.Date(2026, time.October, 31, 12, 0, 0, 0, time.UTC), "CA")
 	if got != "Halloween" {
 		t.Fatalf("got %q, want %q", got, "Halloween")
 	}
 }
 
 func TestObservanceToday_regularDay(t *testing.T) {
-	got := observanceToday(time.Date(2026, time.October, 30, 12, 0, 0, 0, time.UTC))
+	got := observanceToday(time.Date(2026, time.October, 30, 12, 0, 0, 0, time.UTC), "US")
 	if got != "" {
 		t.Fatalf("got %q, want empty", got)
+	}
+}
+
+func TestObservanceToday_USDates(t *testing.T) {
+	cases := []struct {
+		date time.Time
+		want string
+	}{
+		{time.Date(2026, time.February, 2, 12, 0, 0, 0, time.UTC), "Groundhog Day"},
+		{time.Date(2026, time.February, 14, 12, 0, 0, 0, time.UTC), "Valentine's Day"},
+		{time.Date(2026, time.March, 17, 12, 0, 0, 0, time.UTC), "St. Patrick's Day"},
+		{time.Date(2026, time.May, 10, 12, 0, 0, 0, time.UTC), "Mother's Day"},
+		{time.Date(2026, time.June, 21, 12, 0, 0, 0, time.UTC), "Father's Day"},
+		{time.Date(2026, time.November, 26, 12, 0, 0, 0, time.UTC), "Thanksgiving"},
+	}
+	for _, tc := range cases {
+		if got := observanceToday(tc.date, "US"); got != tc.want {
+			t.Errorf("observanceToday(%s, US) = %q, want %q", tc.date.Format("2006-01-02"), got, tc.want)
+		}
+	}
+}
+
+func TestObservanceToday_USOnly(t *testing.T) {
+	date := time.Date(2026, time.February, 14, 12, 0, 0, 0, time.UTC)
+	if got := observanceToday(date, "CA"); got != "" {
+		t.Fatalf("non-US Valentine's observance got %q, want empty", got)
 	}
 }
 
@@ -134,6 +160,23 @@ func TestArtStrip_caseInsensitive(t *testing.T) {
 	upper := artStrip("CHRISTMAS DAY")
 	if lower != upper {
 		t.Errorf("artStrip should be case-insensitive: %q != %q", lower, upper)
+	}
+}
+
+func TestHolidaySign_singleLineUsesDecorationOnTopAndBottom(t *testing.T) {
+	got := holidaySign("Halloween")
+	if got[0] != got[2] {
+		t.Fatalf("top and bottom decorations differ: %q != %q", got[0], got[2])
+	}
+	if got[1] != "HALLOWEEN      " {
+		t.Fatalf("middle row = %q, want holiday name", got[1])
+	}
+}
+
+func TestHolidaySign_multilineKeepsNameOnBottom(t *testing.T) {
+	got := holidaySign("Independence Day")
+	if got[2] == got[0] || got[2] == "" {
+		t.Fatalf("multiline holiday should keep its second text row, got %q", got[2])
 	}
 }
 
