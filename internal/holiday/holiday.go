@@ -81,6 +81,13 @@ func findToday(holidays []nagerHoliday, today string) string {
 	return ""
 }
 
+func observanceToday(now time.Time) string {
+	if now.Month() == time.October && now.Day() == 31 {
+		return "Halloween"
+	}
+	return ""
+}
+
 func findNext(holidays []nagerHoliday, after string) (name string, days int) {
 	afterTime, err := time.Parse("2006-01-02", after)
 	if err != nil {
@@ -243,6 +250,10 @@ func TodaysName(lat, lon float64) string {
 func Fetch(lat, lon float64) ([3]string, bool, error) {
 	now := time.Now()
 	today := now.Format("2006-01-02")
+	if name := observanceToday(now); name != "" {
+		row2, row3 := wrapRows(name)
+		return [3]string{artStrip(name), row2, row3}, false, nil
+	}
 
 	code, err := countryCode(lat, lon)
 	if err != nil {

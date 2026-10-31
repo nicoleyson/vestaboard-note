@@ -3,6 +3,7 @@ package holiday
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 var testHolidays = []nagerHoliday{
@@ -30,6 +31,20 @@ func TestFindToday_empty(t *testing.T) {
 	got := findToday(nil, "2026-01-01")
 	if got != "" {
 		t.Errorf("got %q, want empty", got)
+	}
+}
+
+func TestObservanceToday_halloween(t *testing.T) {
+	got := observanceToday(time.Date(2026, time.October, 31, 12, 0, 0, 0, time.UTC))
+	if got != "Halloween" {
+		t.Fatalf("got %q, want %q", got, "Halloween")
+	}
+}
+
+func TestObservanceToday_regularDay(t *testing.T) {
+	got := observanceToday(time.Date(2026, time.October, 30, 12, 0, 0, 0, time.UTC))
+	if got != "" {
+		t.Fatalf("got %q, want empty", got)
 	}
 }
 
