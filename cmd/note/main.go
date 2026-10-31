@@ -63,15 +63,17 @@ type scheduleEntry struct {
 }
 
 type config struct {
-	Token           string            `yaml:"token"`
-	Lat             float64           `yaml:"lat"`
-	Lon             float64           `yaml:"lon"`
-	ICalURLs        []string          `yaml:"ical_urls"`
-	Countdowns      []countdown.Event `yaml:"countdowns"`
-	DiscogsToken    string            `yaml:"discogs_token"`
-	DiscogsUsername string            `yaml:"discogs_username"`
-	Timezone        string            `yaml:"timezone"`
-	Schedule        []scheduleEntry   `yaml:"schedule"`
+	Token              string               `yaml:"token"`
+	Lat                float64              `yaml:"lat"`
+	Lon                float64              `yaml:"lon"`
+	ICalURLs           []string             `yaml:"ical_urls"`
+	Countdowns         []countdown.Event    `yaml:"countdowns"`
+	DiscogsToken       string               `yaml:"discogs_token"`
+	DiscogsUsername    string               `yaml:"discogs_username"`
+	Timezone           string               `yaml:"timezone"`
+	Schedule           []scheduleEntry      `yaml:"schedule"`
+	HolidayObservances []holiday.Observance `yaml:"holiday_observances"`
+	HolidayExclude     []string             `yaml:"holiday_exclude"`
 }
 
 func loadConfig() (config, error) {
@@ -146,7 +148,7 @@ func runStatus(cfg config) {
 		lines, _, err = dewpoint.Fetch(cfg.Lat, cfg.Lon)
 		printLines("dewpoint", lines, err)
 
-		lines, _, err = holiday.Fetch(cfg.Lat, cfg.Lon)
+		lines, _, err = holiday.FetchWithOptions(cfg.Lat, cfg.Lon, holidayOptions(cfg))
 		printLines("holiday", lines, err)
 
 		lines, _, err = satellites.Fetch(cfg.Lat, cfg.Lon)
@@ -460,16 +462,22 @@ var holidayCache struct {
 	lines    [3]string
 	active   bool
 	valid    bool
+	options  string
+}
+
+func holidayOptions(cfg config) holiday.Options {
+	return holiday.Options{Observances: cfg.HolidayObservances, Exclude: cfg.HolidayExclude}
 }
 
 func todaysHoliday(cfg config) ([3]string, bool, error) {
 	date := time.Now().Format("2006-01-02")
+	optionsKey := fmt.Sprintf("%v|%v", cfg.HolidayObservances, cfg.HolidayExclude)
 	holidayCache.Lock()
 	defer holidayCache.Unlock()
-	if holidayCache.valid && holidayCache.date == date && holidayCache.lat == cfg.Lat && holidayCache.lon == cfg.Lon {
+	if holidayCache.valid && holidayCache.date == date && holidayCache.lat == cfg.Lat && holidayCache.lon == cfg.Lon && holidayCache.options == optionsKey {
 		return holidayCache.lines, holidayCache.active, nil
 	}
-	lines, trivial, err := holiday.Fetch(cfg.Lat, cfg.Lon)
+	lines, trivial, err := holiday.FetchWithOptions(cfg.Lat, cfg.Lon, holidayOptions(cfg))
 	if err != nil {
 		return [3]string{}, false, err
 	}
@@ -479,6 +487,7 @@ func todaysHoliday(cfg config) ([3]string, bool, error) {
 	holidayCache.lines = lines
 	holidayCache.active = !trivial
 	holidayCache.valid = true
+	holidayCache.options = optionsKey
 	return lines, !trivial, nil
 }
 
@@ -705,7 +714,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error: lat and lon required for holiday\n")
 			os.Exit(1)
 		}
-		lines, trivial, err = holiday.Fetch(cfg.Lat, cfg.Lon)
+		lines, trivial, err = holiday.FetchWithOptions(cfg.Lat, cfg.Lon, holidayOptions(cfg))
 	case "satellites":
 		if cfg.Lat == 0 || cfg.Lon == 0 {
 			fmt.Fprintf(os.Stderr, "error: lat and lon required for satellites\n")

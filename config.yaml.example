@@ -12,6 +12,17 @@ countdowns:
   - label: CONCERT
     date: "2027-08-15T20:00:00Z"
 
+# Optional: add recurring or one-time personal observances to the holiday sign.
+# Dates accept MM-DD (every year) or YYYY-MM-DD (one year only).
+holiday_observances:
+  - name: FAMILY DAY
+    date: "06-14"
+
+# Optional: ignore matching holiday names (case-insensitive substring match).
+# This applies to built-in observances and public holidays from the API.
+holiday_exclude:
+  - "Groundhog"
+
 # Timezone for the daemon scheduler. Must be a valid IANA timezone name.
 # See https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
 # If omitted, the system local timezone is used.

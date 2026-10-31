@@ -29,6 +29,16 @@ type nagerHoliday struct {
 	Name string `json:"localName"`
 }
 
+type Observance struct {
+	Name string `yaml:"name"`
+	Date string `yaml:"date"`
+}
+
+type Options struct {
+	Observances []Observance
+	Exclude     []string
+}
+
 func getJSON(url string, target interface{}) error {
 	client := &http.Client{Timeout: 10 * time.Second}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -103,6 +113,39 @@ func observanceToday(now time.Time, country string) string {
 		return "Thanksgiving"
 	}
 	return ""
+}
+
+func customObservanceToday(now time.Time, observances []Observance) string {
+	for _, observance := range observances {
+		if strings.TrimSpace(observance.Name) == "" {
+			continue
+		}
+		if observance.Date == now.Format("01-02") || observance.Date == now.Format("2006-01-02") {
+			return strings.TrimSpace(observance.Name)
+		}
+	}
+	return ""
+}
+
+func isExcluded(name string, excluded []string) bool {
+	name = strings.ToUpper(strings.TrimSpace(name))
+	for _, value := range excluded {
+		value = strings.ToUpper(strings.TrimSpace(value))
+		if value != "" && strings.Contains(name, value) {
+			return true
+		}
+	}
+	return false
+}
+
+func filterExcluded(holidays []nagerHoliday, excluded []string) []nagerHoliday {
+	filtered := make([]nagerHoliday, 0, len(holidays))
+	for _, item := range holidays {
+		if !isExcluded(item.Name, excluded) {
+			filtered = append(filtered, item)
+		}
+	}
+	return filtered
 }
 
 func nthWeekdayOfMonth(date time.Time, weekday time.Weekday) int {
@@ -281,9 +324,16 @@ func TodaysName(lat, lon float64) string {
 }
 
 func Fetch(lat, lon float64) ([3]string, bool, error) {
+	return FetchWithOptions(lat, lon, Options{})
+}
+
+func FetchWithOptions(lat, lon float64, options Options) ([3]string, bool, error) {
 	now := time.Now()
 	today := now.Format("2006-01-02")
-	if name := observanceToday(now, ""); name != "" {
+	if name := customObservanceToday(now, options.Observances); name != "" && !isExcluded(name, options.Exclude) {
+		return holidaySign(name), false, nil
+	}
+	if name := observanceToday(now, ""); name != "" && !isExcluded(name, options.Exclude) {
 		return holidaySign(name), false, nil
 	}
 
@@ -291,7 +341,7 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 	if err != nil {
 		return [3]string{}, false, err
 	}
-	if name := observanceToday(now, code); name != "" {
+	if name := observanceToday(now, code); name != "" && !isExcluded(name, options.Exclude) {
 		return holidaySign(name), false, nil
 	}
 
@@ -299,6 +349,7 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 	if err != nil {
 		return [3]string{}, false, err
 	}
+	holidays = filterExcluded(holidays, options.Exclude)
 
 	if name := findToday(holidays, today); name != "" {
 		return holidaySign(name), false, nil
@@ -308,6 +359,7 @@ func Fetch(lat, lon float64) ([3]string, bool, error) {
 	if nextName == "" {
 		nextYear, err := fetchHolidays(code, now.Year()+1)
 		if err == nil {
+			nextYear = filterExcluded(nextYear, options.Exclude)
 			nextName, days = findNext(nextYear, today)
 		}
 	}

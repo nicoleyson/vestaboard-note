@@ -115,6 +115,20 @@ The pause is stored alongside `config.yaml`, so the daemon and cron jobs see the
 
 On a detected public holiday for your configured location, scheduled jobs and manual display commands show the holiday sign instead of their usual content. On normal days, commands work as usual. If holiday lookup fails, the requested display command runs normally.
 
+Customize observances in `config.yaml`. Custom dates can recur every year (`MM-DD`) or apply to one year (`YYYY-MM-DD`); exclusions match holiday names case-insensitively, including built-in observances and public holidays:
+
+```yaml
+holiday_observances:
+  - name: FAMILY DAY
+    date: "06-14"
+  - name: REUNION
+    date: "2027-08-21"
+
+holiday_exclude:
+  - "Groundhog"
+  - "Columbus"
+```
+
 ---
 
 ## Scheduling with cron

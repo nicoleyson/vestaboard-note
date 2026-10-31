@@ -74,6 +74,45 @@ func TestObservanceToday_USOnly(t *testing.T) {
 	}
 }
 
+func TestCustomObservanceToday_recurringDate(t *testing.T) {
+	now := time.Date(2026, time.June, 14, 12, 0, 0, 0, time.UTC)
+	got := customObservanceToday(now, []Observance{{Name: "Family Day", Date: "06-14"}})
+	if got != "Family Day" {
+		t.Fatalf("got %q, want %q", got, "Family Day")
+	}
+}
+
+func TestCustomObservanceToday_specificYear(t *testing.T) {
+	observance := []Observance{{Name: "Reunion", Date: "2027-08-21"}}
+	for _, tc := range []struct {
+		date time.Time
+		want string
+	}{
+		{time.Date(2027, time.August, 21, 12, 0, 0, 0, time.UTC), "Reunion"},
+		{time.Date(2026, time.August, 21, 12, 0, 0, 0, time.UTC), ""},
+	} {
+		if got := customObservanceToday(tc.date, observance); got != tc.want {
+			t.Errorf("customObservanceToday(%s) = %q, want %q", tc.date.Format("2006-01-02"), got, tc.want)
+		}
+	}
+}
+
+func TestIsExcluded_caseInsensitiveSubstring(t *testing.T) {
+	if !isExcluded("Thanksgiving Day", []string{"thanksGivING"}) {
+		t.Fatal("expected case-insensitive substring exclusion")
+	}
+	if isExcluded("Halloween", []string{"Christmas"}) {
+		t.Fatal("unexpected exclusion")
+	}
+}
+
+func TestFilterExcluded(t *testing.T) {
+	got := filterExcluded([]nagerHoliday{{Name: "Thanksgiving Day"}, {Name: "Veterans Day"}}, []string{"thanksgiving"})
+	if len(got) != 1 || got[0].Name != "Veterans Day" {
+		t.Fatalf("filtered holidays = %#v, want only Veterans Day", got)
+	}
+}
+
 func TestFindNext_basic(t *testing.T) {
 	name, days := findNext(testHolidays, "2026-06-01")
 	if name != "Independence Day" {
