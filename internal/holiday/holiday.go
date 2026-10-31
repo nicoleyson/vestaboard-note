@@ -251,10 +251,10 @@ func artStrip(name string) string {
 func wrapRows(name string) (row2, row3 string) {
 	lines := layout.Wrap(strings.ToUpper(name), layout.Cols)
 	if len(lines) > 0 {
-		row2 = layout.Center(lines[0], layout.Cols)
+		row2 = layout.Center(strings.TrimSpace(lines[0]), layout.Cols)
 	}
 	if len(lines) > 1 {
-		row3 = layout.Center(lines[1], layout.Cols)
+		row3 = layout.Center(strings.TrimSpace(lines[1]), layout.Cols)
 	}
 	return
 }

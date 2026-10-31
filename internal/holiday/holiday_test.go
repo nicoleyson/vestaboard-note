@@ -168,8 +168,8 @@ func TestHolidaySign_singleLineUsesDecorationOnTopAndBottom(t *testing.T) {
 	if got[0] != got[2] {
 		t.Fatalf("top and bottom decorations differ: %q != %q", got[0], got[2])
 	}
-	if got[1] != "HALLOWEEN      " {
-		t.Fatalf("middle row = %q, want holiday name", got[1])
+	if got[1] != "   HALLOWEEN   " {
+		t.Fatalf("middle row = %q, want centered holiday name", got[1])
 	}
 }
 
